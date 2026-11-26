@@ -52,23 +52,23 @@ export function PdfViewerModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.985 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-5xl h-[90vh] flex flex-col bg-white border border-zinc-200 rounded-2xl shadow-2xl overflow-hidden"
+            className="relative w-full max-w-5xl h-[90vh] flex flex-col bg-white dark:bg-[#0F172A] border border-zinc-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Top Toolbar */}
-            <div className="flex items-center justify-between gap-4 px-5 py-3.5 bg-white border-b border-zinc-200/90 shrink-0">
+            <div className="flex items-center justify-between gap-4 px-5 py-3.5 bg-white dark:bg-[#0F172A] border-b border-zinc-200/90 dark:border-slate-800 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <FileText className="w-4 h-4 text-[#1D4ED8] shrink-0" />
+                <FileText className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                 <div className="min-w-0">
                   <h2
                     id="pdf-viewer-title"
-                    className="text-sm font-semibold text-zinc-950 truncate"
+                    className="text-sm font-semibold text-zinc-950 dark:text-white truncate"
                   >
                     {isVi
                       ? 'CV Hoàng Văn Thiện — IT Supervisor (Bản PDF gốc)'
                       : 'Hoang Van Thien — IT Supervisor Resume (Original PDF)'}
                   </h2>
-                  <p className="text-[11px] font-mono text-zinc-500 truncate">
+                  <p className="text-[11px] font-mono text-zinc-500 dark:text-slate-400 truncate">
                     CV_Hoang_Van_Thien_IT_Supervisor.pdf
                   </p>
                 </div>
@@ -87,7 +87,7 @@ export function PdfViewerModal({
                   type="button"
                   onClick={onClose}
                   aria-label={isVi ? 'Đóng trình xem PDF' : 'Close PDF viewer'}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-zinc-600 dark:text-slate-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
                 >
                   <X className="w-5 h-5" strokeWidth={1.75} />
                 </button>
@@ -95,7 +95,7 @@ export function PdfViewerModal({
             </div>
 
             {/* Embedded In-Page PDF Viewer */}
-            <div className="flex-1 bg-zinc-100 relative overflow-hidden">
+            <div className="flex-1 bg-zinc-100 dark:bg-slate-900 relative overflow-hidden">
               <object
                 data={`${pdfUrl}#view=FitH`}
                 type="application/pdf"
@@ -107,8 +107,8 @@ export function PdfViewerModal({
                   title="CV Hoàng Văn Thiện PDF"
                   className="w-full h-full border-0"
                 />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-zinc-50 space-y-4">
-                  <p className="text-sm text-zinc-700 max-w-md">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-zinc-50 dark:bg-slate-900 space-y-4">
+                  <p className="text-sm text-zinc-700 dark:text-slate-300 max-w-md">
                     {isVi
                       ? 'Trình duyệt trên thiết bị này không hỗ trợ xem trước PDF trực tiếp. Bạn có thể tải tệp PDF về để xem đầy đủ.'
                       : 'Inline PDF preview is not supported on this device browser. You can download the PDF file directly.'}

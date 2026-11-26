@@ -27,11 +27,13 @@ import {
   Mail,
   MapPin,
   Menu,
+  Moon,
   Phone,
   Send,
   Server,
   Settings,
   ShieldCheck,
+  Sun,
   User,
   Users,
   X,
@@ -62,34 +64,34 @@ const SKILL_THEME_CLASSES: Record<
   { card: string; iconBg: string; iconColor: string }
 > = {
   blue: {
-    card: 'bg-[#EFF6FF] hover:bg-[#DBEAFE]/80 border-[#BFDBFE]/70',
-    iconBg: 'bg-[#1D4ED8] text-white',
-    iconColor: 'text-[#1D4ED8]',
+    card: 'bg-[#EFF6FF] hover:bg-[#DBEAFE]/80 border-[#BFDBFE]/70 dark:bg-blue-950/45 dark:hover:bg-blue-900/50 dark:border-blue-800/60',
+    iconBg: 'bg-[#1D4ED8] text-white dark:bg-blue-600',
+    iconColor: 'text-[#1D4ED8] dark:text-blue-400',
   },
   rose: {
-    card: 'bg-[#FEF2F2] hover:bg-[#FEE2E2]/80 border-[#FECACA]/70',
-    iconBg: 'bg-[#EF4444] text-white',
-    iconColor: 'text-[#DC2626]',
+    card: 'bg-[#FEF2F2] hover:bg-[#FEE2E2]/80 border-[#FECACA]/70 dark:bg-rose-950/40 dark:hover:bg-rose-900/45 dark:border-rose-800/60',
+    iconBg: 'bg-[#EF4444] text-white dark:bg-rose-600',
+    iconColor: 'text-[#DC2626] dark:text-rose-400',
   },
   emerald: {
-    card: 'bg-[#ECFDF5] hover:bg-[#D1FAE5]/80 border-[#A7F3D0]/70',
-    iconBg: 'bg-[#10B981] text-white',
-    iconColor: 'text-[#059669]',
+    card: 'bg-[#ECFDF5] hover:bg-[#D1FAE5]/80 border-[#A7F3D0]/70 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/45 dark:border-emerald-800/60',
+    iconBg: 'bg-[#10B981] text-white dark:bg-emerald-600',
+    iconColor: 'text-[#059669] dark:text-emerald-400',
   },
   indigo: {
-    card: 'bg-[#EEF2FF] hover:bg-[#E0E7FF]/80 border-[#C7D2FE]/70',
-    iconBg: 'bg-[#4F46E5] text-white',
-    iconColor: 'text-[#4F46E5]',
+    card: 'bg-[#EEF2FF] hover:bg-[#E0E7FF]/80 border-[#C7D2FE]/70 dark:bg-indigo-950/45 dark:hover:bg-indigo-900/50 dark:border-indigo-800/60',
+    iconBg: 'bg-[#4F46E5] text-white dark:bg-indigo-600',
+    iconColor: 'text-[#4F46E5] dark:text-indigo-400',
   },
   cyan: {
-    card: 'bg-[#ECFEFF] hover:bg-[#CFFAFE]/80 border-[#A5F3FC]/70',
-    iconBg: 'bg-[#0891B2] text-white',
-    iconColor: 'text-[#0891B2]',
+    card: 'bg-[#ECFEFF] hover:bg-[#CFFAFE]/80 border-[#A5F3FC]/70 dark:bg-cyan-950/40 dark:hover:bg-cyan-900/45 dark:border-cyan-800/60',
+    iconBg: 'bg-[#0891B2] text-white dark:bg-cyan-600',
+    iconColor: 'text-[#0891B2] dark:text-cyan-400',
   },
   amber: {
-    card: 'bg-[#FFFBEB] hover:bg-[#FEF3C7]/80 border-[#FDE68A]/70',
-    iconBg: 'bg-[#F59E0B] text-white',
-    iconColor: 'text-[#D97706]',
+    card: 'bg-[#FFFBEB] hover:bg-[#FEF3C7]/80 border-[#FDE68A]/70 dark:bg-amber-950/35 dark:hover:bg-amber-900/40 dark:border-amber-800/60',
+    iconBg: 'bg-[#F59E0B] text-white dark:bg-amber-500',
+    iconColor: 'text-[#D97706] dark:text-amber-400',
   },
 };
 
@@ -129,6 +131,11 @@ function SectionArrivalBar({ active }: { active: boolean }) {
 
 export default function App() {
   const [lang, setLang] = useState<Language>('vi');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light';
+    const saved = window.localStorage.getItem('portfolio-theme');
+    return saved === 'dark' || saved === 'light' ? saved : 'light';
+  });
   const [activeNav, setActiveNav] = useState<string>('top');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -202,6 +209,13 @@ export default function App() {
     document.title = content.pageTitle;
     document.documentElement.lang = lang;
   }, [content.pageTitle, lang]);
+
+  useEffect(() => {
+    const isDark = theme === 'dark';
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem('portfolio-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     const sectionOrder = ['about', 'skills', 'projects', 'experience', 'education', 'contact'];
@@ -398,11 +412,20 @@ export default function App() {
     setIsContactOpen(true);
   };
 
+  const themeToggleLabel =
+    theme === 'dark'
+      ? lang === 'vi'
+        ? 'Chuyển sang giao diện sáng'
+        : 'Switch to light mode'
+      : lang === 'vi'
+        ? 'Chuyển sang giao diện tối'
+        : 'Switch to dark mode';
+
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen bg-[#F3F6FA] text-[#0F172A] flex flex-col">
-        {/* Top Navigation Bar matching mockup */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/90">
+      <div className="min-h-screen bg-[#F3F6FA] dark:bg-[#0B1120] text-[#0F172A] dark:text-slate-100 flex flex-col transition-colors duration-300">
+        {/* Top Navigation Bar */}
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-md border-b border-zinc-200/90 dark:border-slate-800/90 transition-colors duration-300">
           <div
             ref={headerBarRef}
             className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between gap-4"
@@ -413,12 +436,12 @@ export default function App() {
               onClick={(e) => scrollToSection('top', e)}
               className="flex items-center gap-2.5 shrink-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1D4ED8] rounded-md"
             >
-              <HTMonogram variant="light" />
+              <HTMonogram variant={theme === 'dark' ? 'dark' : 'light'} />
               <div className="leading-tight">
-                <div className="font-display text-sm sm:text-[15px] font-bold tracking-tight text-[#0A2259] whitespace-nowrap">
+                <div className="font-display text-sm sm:text-[15px] font-bold tracking-tight text-[#0A2259] dark:text-white whitespace-nowrap">
                   {profile.brandName}
                 </div>
-                <div className="text-[11px] font-semibold text-[#1D4ED8] whitespace-nowrap">
+                <div className="text-[11px] font-semibold text-[#1D4ED8] dark:text-sky-400 whitespace-nowrap">
                   IT Supervisor
                 </div>
               </div>
@@ -439,19 +462,19 @@ export default function App() {
                     className={`relative inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-left transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${
                       isActive
                         ? 'text-white'
-                        : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950'
+                        : 'text-zinc-700 dark:text-slate-300 hover:bg-zinc-100 dark:hover:bg-slate-800/80 hover:text-zinc-950 dark:hover:text-white'
                     }`}
                   >
                     {isActive && (
                       <motion.span
                         layoutId="nav-active-pill"
                         transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                        className="absolute inset-0 bg-[#0B469B] rounded-xl shadow-sm -z-10"
+                        className="absolute inset-0 bg-[#0B469B] dark:bg-sky-600 rounded-xl shadow-sm -z-10"
                       />
                     )}
                     <Icon
                       className={`w-4 h-4 shrink-0 transition-colors ${
-                        isActive ? 'text-white' : 'text-[#0B469B]'
+                        isActive ? 'text-white' : 'text-[#0B469B] dark:text-sky-400'
                       }`}
                       strokeWidth={2}
                     />
@@ -461,9 +484,45 @@ export default function App() {
               })}
             </nav>
 
-            {/* Right Zone: VI | EN Language Switcher + Mobile Menu Button */}
+            {/* Right Zone: Icon-only Theme Switcher + VI | EN Language Switcher + Mobile Menu Button */}
             <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+                aria-label={themeToggleLabel}
+                aria-pressed={theme === 'dark'}
+                title={themeToggleLabel}
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-100 hover:bg-zinc-200/80 dark:bg-slate-800/90 dark:hover:bg-slate-700/90 border border-zinc-200/80 dark:border-slate-700/80 text-slate-700 dark:text-amber-300 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  {theme === 'dark' ? (
+                    <motion.span
+                      key="sun"
+                      initial={{ opacity: 0, rotate: -45, scale: 0.75 }}
+                      animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                      exit={{ opacity: 0, rotate: 45, scale: 0.75 }}
+                      transition={{ duration: 0.18 }}
+                      className="inline-flex"
+                    >
+                      <Sun className="w-4 h-4" strokeWidth={2.1} />
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      key="moon"
+                      initial={{ opacity: 0, rotate: 45, scale: 0.75 }}
+                      animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                      exit={{ opacity: 0, rotate: -45, scale: 0.75 }}
+                      transition={{ duration: 0.18 }}
+                      className="inline-flex"
+                    >
+                      <Moon className="w-4 h-4" strokeWidth={2.1} />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+
               <LanguageSwitcher lang={lang} onChange={setLang} compact />
+
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((prev) => !prev)}
@@ -477,7 +536,7 @@ export default function App() {
                       ? 'Mở menu'
                       : 'Open menu'
                 }
-                className="xl:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-colors"
+                className="xl:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg text-zinc-700 dark:text-slate-200 hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -486,7 +545,7 @@ export default function App() {
 
           {/* Mobile / Tablet Nav Drawer */}
           {mobileMenuOpen && (
-            <div className="xl:hidden border-t border-zinc-200 bg-white px-5 py-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="xl:hidden border-t border-zinc-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] px-5 py-3 grid grid-cols-2 sm:grid-cols-4 gap-2 transition-colors">
               {navItems.map(({ id, href, label, Icon }) => {
                 const isActive = activeNav === id;
                 return (
@@ -496,8 +555,8 @@ export default function App() {
                     onClick={(e) => scrollToSection(id, e)}
                     className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold min-h-[44px] transition-colors ${
                       isActive
-                        ? 'bg-[#0B469B] text-white'
-                        : 'text-zinc-700 bg-zinc-50 hover:bg-zinc-100'
+                        ? 'bg-[#0B469B] dark:bg-sky-600 text-white'
+                        : 'text-zinc-700 dark:text-slate-200 bg-zinc-50 dark:bg-slate-800/80 hover:bg-zinc-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
@@ -894,7 +953,7 @@ export default function App() {
           >
             <motion.div
               style={{ y: highlightStripY }}
-              className="bg-white rounded-2xl shadow-lg shadow-slate-900/5 border border-zinc-200/80 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-zinc-200/80 will-change-transform"
+              className="bg-white dark:bg-[#131C31] rounded-2xl shadow-lg shadow-slate-900/5 dark:shadow-black/35 border border-zinc-200/80 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-zinc-200/80 dark:divide-slate-800 will-change-transform transition-colors duration-300"
             >
               {highlights.map((item, idx) => (
                 <motion.div
@@ -911,10 +970,10 @@ export default function App() {
                 >
                   <HighlightIcon type={item.iconType} />
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-zinc-950 leading-tight truncate">
+                    <div className="text-sm font-bold text-zinc-950 dark:text-slate-100 leading-tight truncate">
                       {item.title}
                     </div>
-                    <div className="text-[11px] text-zinc-600 leading-snug truncate">
+                    <div className="text-[11px] text-zinc-600 dark:text-slate-400 leading-snug truncate">
                       {item.subtitle}
                     </div>
                   </div>
@@ -937,21 +996,21 @@ export default function App() {
                 transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'about'
-                    ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
+                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
                     : ''
                 }`}
               >
                 <div>
-                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] rounded-full self-center" aria-hidden="true" />
+                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
                     <span>{about.headingVi}</span>
-                    <span className="text-zinc-300 font-normal">|</span>
-                    <span className="text-sm font-semibold text-[#1D4ED8]">{about.headingEn}</span>
+                    <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                    <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">{about.headingEn}</span>
                   </h2>
                   <SectionArrivalBar active={highlightedSection === 'about'} />
                 </div>
 
-                <p className="text-[13.5px] text-zinc-700 leading-relaxed">{about.summary}</p>
+                <p className="text-[13.5px] text-zinc-700 dark:text-slate-300 leading-relaxed">{about.summary}</p>
 
                 <ul className="space-y-2 pt-1">
                   {about.values.map((val, idx) => (
@@ -961,9 +1020,9 @@ export default function App() {
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true, amount: 0.2 }}
                       transition={{ duration: 0.3, delay: 0.06 + idx * 0.055, ease: [0.16, 1, 0.3, 1] }}
-                      className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800"
+                      className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800 dark:text-slate-200"
                     >
-                      <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                       <span>{val}</span>
                     </motion.li>
                   ))}
@@ -973,7 +1032,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsCvOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#1D4ED8] bg-white hover:bg-blue-50 border border-[#1D4ED8]/40 rounded-full transition-colors min-h-[38px]"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-colors min-h-[38px]"
                   >
                     <span>{about.moreBtn}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -991,26 +1050,26 @@ export default function App() {
                 transition={{ duration: 0.38, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'skills'
-                    ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
+                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
                     : ''
                 }`}
               >
                 <div>
-                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] rounded-full self-center" aria-hidden="true" />
+                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
                     <span>{skillsSection.headingVi}</span>
-                    <span className="text-zinc-300 font-normal">|</span>
-                    <span className="text-sm font-semibold text-[#1D4ED8]">
+                    <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                    <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
                       {skillsSection.headingEn}
                     </span>
                   </h2>
                   <SectionArrivalBar active={highlightedSection === 'skills'} />
                 </div>
 
-                <div className="bg-white rounded-2xl border border-zinc-200/90 p-3.5 shadow-xs">
+                <div className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-3.5 shadow-xs transition-colors duration-300">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                     {competencies.map((comp, idx) => {
-                      const theme = SKILL_THEME_CLASSES[comp.theme];
+                      const skillTheme = SKILL_THEME_CLASSES[comp.theme];
                       return (
                         <motion.button
                           key={comp.id}
@@ -1024,18 +1083,18 @@ export default function App() {
                             delay: idx * 0.045,
                             ease: [0.16, 1, 0.3, 1],
                           }}
-                          className={`group text-center rounded-xl border p-3.5 flex flex-col items-center justify-center gap-2 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${theme.card}`}
+                          className={`group text-center rounded-xl border p-3.5 flex flex-col items-center justify-center gap-2 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${skillTheme.card}`}
                         >
                           <span
-                            className={`inline-flex items-center justify-center w-9 h-9 rounded-full shadow-xs transition-transform duration-200 group-hover:scale-105 ${theme.iconBg}`}
+                            className={`inline-flex items-center justify-center w-9 h-9 rounded-full shadow-xs transition-transform duration-200 group-hover:scale-105 ${skillTheme.iconBg}`}
                           >
                             {renderSkillTileIcon(comp.iconKey)}
                           </span>
                           <div className="space-y-0.5">
-                            <div className="text-xs font-bold text-zinc-900 leading-snug">
+                            <div className="text-xs font-bold text-zinc-900 dark:text-slate-100 leading-snug">
                               {comp.title}
                             </div>
-                            <div className="text-[10.5px] text-zinc-600 leading-tight">
+                            <div className="text-[10.5px] text-zinc-600 dark:text-slate-400 leading-tight">
                               {comp.shortSubtitle}
                             </div>
                           </div>
@@ -1043,7 +1102,7 @@ export default function App() {
                       );
                     })}
                   </div>
-                  <p className="text-[11px] text-zinc-500 text-center pt-2.5">
+                  <p className="text-[11px] text-zinc-500 dark:text-slate-400 text-center pt-2.5">
                     {skillsSection.clickHint}
                   </p>
                 </div>
@@ -1059,17 +1118,17 @@ export default function App() {
                 transition={{ duration: 0.38, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'projects'
-                    ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
+                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
                     : ''
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-4">
-                    <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950">
-                      <span className="inline-block w-1 h-4 bg-[#1D4ED8] rounded-full self-center" aria-hidden="true" />
+                    <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                      <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
                       <span>{projectsSection.headingVi}</span>
-                      <span className="text-zinc-300 font-normal">|</span>
-                      <span className="text-sm font-semibold text-[#1D4ED8]">
+                      <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                      <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
                         {projectsSection.headingEn}
                       </span>
                     </h2>
@@ -1077,7 +1136,7 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setSelectedProjectId(projects[0].id)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#1D4ED8] hover:underline whitespace-nowrap shrink-0"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#1D4ED8] dark:text-sky-400 hover:underline whitespace-nowrap shrink-0"
                     >
                       <span>{projectsSection.viewAll}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -1101,7 +1160,7 @@ export default function App() {
                           delay: idx * 0.065,
                           ease: [0.16, 1, 0.3, 1],
                         }}
-                        className={`bg-white rounded-2xl border border-zinc-200/90 overflow-hidden shadow-xs flex flex-col justify-between transition-all hover:border-zinc-300 hover:shadow-md ${
+                        className={`bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between transition-all hover:border-zinc-300 dark:hover:border-slate-700 hover:shadow-md dark:hover:shadow-black/30 ${
                           isWideCard ? 'sm:col-span-2' : ''
                         }`}
                       >
@@ -1122,14 +1181,14 @@ export default function App() {
 
                           <div className="p-3.5 flex-1 flex flex-col justify-between gap-3">
                             <div className="space-y-1">
-                              <h3 className="text-[13px] font-bold text-zinc-950 leading-snug line-clamp-2">
+                              <h3 className="text-[13px] font-bold text-zinc-950 dark:text-slate-100 leading-snug line-clamp-2">
                                 {proj.shortTitle}
                               </h3>
-                              <p className="text-[11px] text-zinc-500">{proj.subtitle}</p>
+                              <p className="text-[11px] text-zinc-500 dark:text-slate-400">{proj.subtitle}</p>
                             </div>
 
                             <span
-                              className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-[#1D4ED8] border border-[#1D4ED8]/40 rounded-full hover:bg-blue-50 transition-colors ${
+                              className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-[#1D4ED8] dark:text-sky-300 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full hover:bg-blue-50 dark:hover:bg-sky-950/50 transition-colors ${
                                 isWideCard ? 'sm:w-auto sm:self-start sm:px-4 w-full' : 'w-full'
                               }`}
                             >
@@ -1146,7 +1205,7 @@ export default function App() {
             </div>
 
             {/* ROW 2: Bottom 3-Column Row (Work Experience | Education | Contact + QR) */}
-            <div className="pt-8 border-t border-zinc-200/90 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="pt-8 border-t border-zinc-200/90 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Col 1: Kinh nghiệm làm việc | Work Experience */}
               <motion.section
                 id="experience"
@@ -1157,16 +1216,16 @@ export default function App() {
                 transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'experience'
-                    ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
+                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
                     : ''
                 }`}
               >
                 <div>
-                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] rounded-full self-center" aria-hidden="true" />
+                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
                     <span>{experienceSection.headingVi}</span>
-                    <span className="text-zinc-300 font-normal">|</span>
-                    <span className="text-sm font-semibold text-[#1D4ED8]">
+                    <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                    <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
                       {experienceSection.headingEn}
                     </span>
                   </h2>
@@ -1181,19 +1240,19 @@ export default function App() {
                         whileInView={{ scale: 1, opacity: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.3 }}
-                        className="w-2.5 h-2.5 rounded-full border-2 border-[#1D4ED8] bg-white inline-block"
+                        className="w-2.5 h-2.5 rounded-full border-2 border-[#1D4ED8] dark:border-sky-400 bg-white dark:bg-[#0B1120] inline-block"
                       />
-                      <span className="text-xs font-bold text-[#1D4ED8] font-mono tabular-nums">
+                      <span className="text-xs font-bold text-[#1D4ED8] dark:text-sky-400 font-mono tabular-nums">
                         {experiences[0].period}
                       </span>
                     </div>
-                    <div className="text-[11px] text-zinc-500 pl-4">
+                    <div className="text-[11px] text-zinc-500 dark:text-slate-400 pl-4">
                       {experiences[0].duration}
                     </div>
                   </div>
 
                   <div className="space-y-2.5 flex-1">
-                    <h3 className="text-sm font-bold text-zinc-950 leading-snug">
+                    <h3 className="text-sm font-bold text-zinc-950 dark:text-slate-100 leading-snug">
                       {experiences[0].organization}
                     </h3>
                     <ul className="space-y-1.5">
@@ -1208,7 +1267,7 @@ export default function App() {
                             delay: 0.05 + idx * 0.05,
                             ease: [0.16, 1, 0.3, 1],
                           }}
-                          className="text-xs text-zinc-700 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8]"
+                          className="text-xs text-zinc-700 dark:text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8] dark:before:text-sky-400"
                         >
                           {item}
                         </motion.li>
@@ -1218,7 +1277,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setIsCvOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-[#1D4ED8] bg-white hover:bg-blue-50 border border-[#1D4ED8]/40 rounded-full transition-colors"
+                        className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-colors"
                       >
                         <span>{experienceSection.viewDetails}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -1238,16 +1297,16 @@ export default function App() {
                 transition={{ duration: 0.38, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'education'
-                    ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
+                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
                     : ''
                 }`}
               >
                 <div>
-                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] rounded-full self-center" aria-hidden="true" />
+                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
                     <span>{educationSection.headingVi}</span>
-                    <span className="text-zinc-300 font-normal">|</span>
-                    <span className="text-sm font-semibold text-[#1D4ED8]">
+                    <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                    <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
                       {educationSection.headingEn}
                     </span>
                   </h2>
@@ -1260,15 +1319,15 @@ export default function App() {
                     whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.35, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-center shrink-0"
+                    className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0"
                   >
-                    <Award className="w-6 h-6 text-[#D97706]" strokeWidth={1.8} />
+                    <Award className="w-6 h-6 text-[#D97706] dark:text-amber-400" strokeWidth={1.8} />
                   </motion.div>
                   <div className="space-y-1.5">
-                    <div className="text-sm font-bold text-zinc-950 leading-snug">
+                    <div className="text-sm font-bold text-zinc-950 dark:text-slate-100 leading-snug">
                       {educationSection.degree}
                     </div>
-                    <div className="text-xs font-semibold text-zinc-800">
+                    <div className="text-xs font-semibold text-zinc-800 dark:text-slate-200">
                       {educationSection.school}
                     </div>
                     <ul className="space-y-1 pt-1">
@@ -1283,7 +1342,7 @@ export default function App() {
                             delay: 0.1 + idx * 0.05,
                             ease: [0.16, 1, 0.3, 1],
                           }}
-                          className="text-xs text-zinc-600 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-zinc-400"
+                          className="text-xs text-zinc-600 dark:text-slate-400 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-zinc-400 dark:before:text-slate-500"
                         >
                           {detail}
                         </motion.li>
@@ -1303,16 +1362,16 @@ export default function App() {
                 transition={{ duration: 0.38, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'contact'
-                    ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
+                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
                     : ''
                 }`}
               >
                 <div>
-                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] rounded-full self-center" aria-hidden="true" />
+                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
                     <span>{contactSection.headingVi}</span>
-                    <span className="text-zinc-300 font-normal">|</span>
-                    <span className="text-sm font-semibold text-[#1D4ED8]">
+                    <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                    <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
                       {contactSection.headingEn}
                     </span>
                   </h2>
@@ -1320,14 +1379,14 @@ export default function App() {
                 </div>
 
                 <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-2.5 text-xs text-zinc-700 min-w-0">
+                  <div className="space-y-2.5 text-xs text-zinc-700 dark:text-slate-300 min-w-0">
                     <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-[#1D4ED8] shrink-0" />
+                      <Phone className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                       <span>
                         {contactSection.phoneLabel}{' '}
                         <a
                           href={`tel:${profile.phone}`}
-                          className="font-semibold text-zinc-950 font-mono tabular-nums hover:text-[#1D4ED8]"
+                          className="font-semibold text-zinc-950 dark:text-slate-100 font-mono tabular-nums hover:text-[#1D4ED8] dark:hover:text-sky-400"
                         >
                           {profile.phoneDisplay}
                         </a>
@@ -1336,10 +1395,10 @@ export default function App() {
                         type="button"
                         onClick={() => handleCopy(profile.phone, 'phone')}
                         aria-label="Copy phone"
-                        className="text-zinc-400 hover:text-[#1D4ED8] p-1"
+                        className="text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 p-1"
                       >
                         {copiedField === 'phone' ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
@@ -1347,12 +1406,12 @@ export default function App() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-[#1D4ED8] shrink-0" />
+                      <Mail className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                       <span className="truncate">
                         {contactSection.emailLabel}{' '}
                         <a
                           href={`mailto:${profile.email}`}
-                          className="font-semibold text-zinc-950 hover:text-[#1D4ED8]"
+                          className="font-semibold text-zinc-950 dark:text-slate-100 hover:text-[#1D4ED8] dark:hover:text-sky-400"
                         >
                           {profile.email}
                         </a>
@@ -1361,10 +1420,10 @@ export default function App() {
                         type="button"
                         onClick={() => handleCopy(profile.email, 'email')}
                         aria-label="Copy email"
-                        className="text-zinc-400 hover:text-[#1D4ED8] p-1 shrink-0"
+                        className="text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 p-1 shrink-0"
                       >
                         {copiedField === 'email' ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
@@ -1372,10 +1431,10 @@ export default function App() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-[#1D4ED8] shrink-0" />
+                      <MapPin className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                       <span>
                         {contactSection.addressLabel}{' '}
-                        <strong className="font-semibold text-zinc-950">
+                        <strong className="font-semibold text-zinc-950 dark:text-slate-100">
                           {contactSection.addressValue}
                         </strong>
                       </span>
@@ -1388,7 +1447,7 @@ export default function App() {
                           setContactSubject('');
                           setIsContactOpen(true);
                         }}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0B469B] hover:bg-[#1D4ED8] rounded-full transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0B469B] hover:bg-[#1D4ED8] dark:bg-sky-600 dark:hover:bg-sky-500 rounded-full transition-colors"
                       >
                         <Send className="w-3 h-3" />
                         <span>{contactSection.sendMsgBtn}</span>
@@ -1404,7 +1463,7 @@ export default function App() {
                     className="flex flex-col items-center gap-1.5 shrink-0"
                   >
                     <QrCodeGraphic />
-                    <span className="text-[10.5px] font-medium text-zinc-600 text-center max-w-[84px] leading-tight">
+                    <span className="text-[10.5px] font-medium text-zinc-600 dark:text-slate-400 text-center max-w-[84px] leading-tight">
                       {contactSection.qrCaption}
                     </span>
                   </motion.div>
@@ -1415,7 +1474,7 @@ export default function App() {
         </main>
 
         {/* DARK NAVY FOOTER */}
-        <footer className="bg-[#06183A] text-white border-t border-blue-950">
+        <footer className="bg-[#06183A] dark:bg-[#050A18] text-white border-t border-blue-950 dark:border-slate-800/90 transition-colors duration-300">
           <div className="max-w-[1340px] mx-auto px-6 lg:px-10 py-6 flex flex-col md:flex-row items-center justify-between gap-5">
             <div className="flex items-center gap-3 shrink-0">
               <HTMonogram variant="dark" />
@@ -1486,7 +1545,7 @@ export default function App() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 14, scale: 0.9 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed bottom-5 right-5 z-30 inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#0B469B] hover:bg-[#1D4ED8] text-white shadow-lg shadow-blue-950/25 border border-white/20 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+              className="fixed bottom-5 right-5 z-30 inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#0B469B] hover:bg-[#1D4ED8] dark:bg-sky-600 dark:hover:bg-sky-500 text-white shadow-lg shadow-blue-950/25 dark:shadow-black/40 border border-white/20 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
             >
               <ArrowUp className="w-5 h-5" strokeWidth={2.2} />
             </motion.button>

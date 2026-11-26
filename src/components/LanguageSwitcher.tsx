@@ -47,7 +47,7 @@ export function LanguageSwitcher({
     <div
       role="group"
       aria-label={lang === 'vi' ? 'Chuyển đổi ngôn ngữ' : 'Switch language'}
-      className={`inline-flex items-center p-1 bg-zinc-100 rounded-lg border border-zinc-200/80 ${
+      className={`inline-flex items-center p-1 bg-zinc-100 dark:bg-slate-800/90 rounded-lg border border-zinc-200/80 dark:border-slate-700/80 ${
         compact ? 'gap-0.5' : 'w-full gap-1'
       }`}
     >
@@ -60,8 +60,8 @@ export function LanguageSwitcher({
           compact ? 'px-2 py-1.5 text-[11px] min-h-[34px]' : 'flex-1 px-2.5 py-2 text-xs min-h-[36px]'
         } ${
           lang === 'vi'
-            ? 'bg-white text-zinc-950 shadow-xs'
-            : 'text-zinc-600 hover:text-zinc-950'
+            ? 'bg-white dark:bg-slate-700 text-zinc-950 dark:text-white shadow-xs'
+            : 'text-zinc-600 dark:text-slate-400 hover:text-zinc-950 dark:hover:text-white'
         }`}
       >
         <VietnamFlagIcon />
@@ -77,8 +77,8 @@ export function LanguageSwitcher({
           compact ? 'px-2 py-1.5 text-[11px] min-h-[34px]' : 'flex-1 px-2.5 py-2 text-xs min-h-[36px]'
         } ${
           lang === 'en'
-            ? 'bg-white text-zinc-950 shadow-xs'
-            : 'text-zinc-600 hover:text-zinc-950'
+            ? 'bg-white dark:bg-slate-700 text-zinc-950 dark:text-white shadow-xs'
+            : 'text-zinc-600 dark:text-slate-400 hover:text-zinc-950 dark:hover:text-white'
         }`}
       >
         <UkFlagIcon />

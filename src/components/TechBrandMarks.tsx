@@ -41,21 +41,21 @@ export function HighlightIcon({
   type: 'trophy' | 'grad' | 'oracle' | 'windows' | 'arcgis' | 'shield';
 }) {
   if (type === 'trophy') {
-    return <Trophy className="w-6 h-6 text-[#1D4ED8] shrink-0" strokeWidth={1.9} />;
+    return <Trophy className="w-6 h-6 text-[#1D4ED8] dark:text-sky-400 shrink-0" strokeWidth={1.9} />;
   }
   if (type === 'grad') {
-    return <GraduationCap className="w-7 h-7 text-[#1D4ED8] shrink-0" strokeWidth={1.9} />;
+    return <GraduationCap className="w-7 h-7 text-[#1D4ED8] dark:text-sky-400 shrink-0" strokeWidth={1.9} />;
   }
   if (type === 'oracle') {
     return (
-      <span className="font-display text-[15px] font-extrabold tracking-wider text-[#C74634] leading-none shrink-0">
+      <span className="font-display text-[15px] font-extrabold tracking-wider text-[#C74634] dark:text-[#FF7864] leading-none shrink-0">
         ORACLE
       </span>
     );
   }
   if (type === 'windows') {
     return (
-      <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#0284C7] shrink-0" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="w-6 h-6 text-[#0284C7] dark:text-sky-400 shrink-0" aria-hidden="true">
         <rect x="2" y="2" width="9" height="9" fill="currentColor" rx="0.8" />
         <rect x="13" y="2" width="9" height="9" fill="currentColor" rx="0.8" />
         <rect x="2" y="13" width="9" height="9" fill="currentColor" rx="0.8" />
@@ -66,14 +66,14 @@ export function HighlightIcon({
   if (type === 'arcgis') {
     return (
       <svg viewBox="0 0 28 28" className="w-7 h-7 shrink-0" aria-hidden="true">
-        <circle cx="14" cy="14" r="11.5" fill="#16A34A" fillOpacity="0.16" stroke="#15803D" strokeWidth="1.6" />
-        <ellipse cx="14" cy="14" rx="5.5" ry="11.5" fill="none" stroke="#15803D" strokeWidth="1.4" />
-        <path d="M3 14 H25 M5.5 8.5 H22.5 M5.5 19.5 H22.5" stroke="#15803D" strokeWidth="1.3" />
-        <circle cx="14" cy="14" r="11.5" fill="none" stroke="#1D4ED8" strokeWidth="1.2" strokeDasharray="3 2" />
+        <circle cx="14" cy="14" r="11.5" fill="#16A34A" fillOpacity="0.18" stroke="#22C55E" strokeWidth="1.6" />
+        <ellipse cx="14" cy="14" rx="5.5" ry="11.5" fill="none" stroke="#22C55E" strokeWidth="1.4" />
+        <path d="M3 14 H25 M5.5 8.5 H22.5 M5.5 19.5 H22.5" stroke="#22C55E" strokeWidth="1.3" />
+        <circle cx="14" cy="14" r="11.5" fill="none" stroke="#38BDF8" strokeWidth="1.2" strokeDasharray="3 2" />
       </svg>
     );
   }
-  return <ShieldCheck className="w-6 h-6 text-[#1D4ED8] shrink-0" strokeWidth={1.9} />;
+  return <ShieldCheck className="w-6 h-6 text-[#1D4ED8] dark:text-sky-400 shrink-0" strokeWidth={1.9} />;
 }
 
 export function ProjectCardArtwork({
@@ -360,7 +360,7 @@ export function QrCodeGraphic() {
   return (
     <svg
       viewBox="0 0 23 23"
-      className="w-20 h-20 bg-white p-1 rounded-lg border border-zinc-200 shrink-0"
+      className="w-20 h-20 bg-white p-1 rounded-lg border border-zinc-200 dark:border-slate-700 shrink-0 shadow-xs"
       aria-label="QR Code"
     >
       <rect width="23" height="23" fill="#FFFFFF" />

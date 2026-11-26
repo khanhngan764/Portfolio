@@ -53,12 +53,12 @@ export function ProjectModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.985 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white border border-zinc-200 rounded-2xl shadow-2xl"
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0F172A] border border-zinc-200 dark:border-slate-800 rounded-2xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-white/95 backdrop-blur-xs border-b border-zinc-200/80">
-              <div className="flex items-center gap-2 text-xs text-zinc-500 min-w-0">
-                <span className="font-medium text-zinc-800 truncate">{project.platform}</span>
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-xs border-b border-zinc-200/80 dark:border-slate-800">
+              <div className="flex items-center gap-2 text-xs text-zinc-500 dark:text-slate-400 min-w-0">
+                <span className="font-medium text-zinc-800 dark:text-slate-200 truncate">{project.platform}</span>
                 <span aria-hidden="true">·</span>
                 <span className="whitespace-nowrap">{project.category}</span>
                 <span aria-hidden="true">·</span>
@@ -68,7 +68,7 @@ export function ProjectModal({
                 type="button"
                 onClick={onClose}
                 aria-label={copy.closeLabel}
-                className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] shrink-0"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-zinc-600 dark:text-slate-400 hover:text-zinc-950 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] shrink-0"
               >
                 <X className="w-5 h-5" strokeWidth={1.75} />
               </button>
@@ -78,51 +78,51 @@ export function ProjectModal({
               <div className="space-y-3">
                 <h2
                   id="project-modal-title"
-                  className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-950 text-balance"
+                  className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white text-balance"
                 >
                   {project.title}
                 </h2>
-                <p className="text-base text-zinc-600 leading-relaxed max-w-3xl">
+                <p className="text-base text-zinc-600 dark:text-slate-300 leading-relaxed max-w-3xl">
                   {project.summary}
                 </p>
               </div>
 
-              <div className="rounded-xl overflow-hidden border border-zinc-200/90 min-h-[240px]">
+              <div className="rounded-xl overflow-hidden border border-zinc-200/90 dark:border-slate-700/80 min-h-[240px]">
                 <ProjectVisualPreview visualType={project.visualType} lang={lang} />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-zinc-200/80">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2 border-t border-zinc-200/80 dark:border-slate-800">
                 <div>
-                  <h3 className="text-xs font-medium text-zinc-500 mb-1.5">
+                  <h3 className="text-xs font-medium text-zinc-500 dark:text-slate-400 mb-1.5">
                     {copy.roleHeading}
                   </h3>
-                  <p className="text-sm font-medium text-zinc-900">{project.role}</p>
+                  <p className="text-sm font-medium text-zinc-900 dark:text-slate-100">{project.role}</p>
                 </div>
                 <div>
-                  <h3 className="text-xs font-medium text-zinc-500 mb-1.5">
+                  <h3 className="text-xs font-medium text-zinc-500 dark:text-slate-400 mb-1.5">
                     {copy.techHeading}
                   </h3>
-                  <p className="text-sm text-zinc-800 leading-relaxed">
+                  <p className="text-sm text-zinc-800 dark:text-slate-200 leading-relaxed">
                     {project.deliverables.join(' · ')}
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-xs font-medium text-zinc-500 mb-1.5">
+                  <h3 className="text-xs font-medium text-zinc-500 dark:text-slate-400 mb-1.5">
                     {copy.impactHeading}
                   </h3>
-                  <p className="text-sm font-medium text-[#2563EB] leading-relaxed">
+                  <p className="text-sm font-medium text-[#2563EB] dark:text-sky-400 leading-relaxed">
                     {project.impact}
                   </p>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-zinc-200/80 space-y-3">
-                <h3 className="text-sm font-semibold text-zinc-950">{copy.scopeHeading}</h3>
+              <div className="pt-6 border-t border-zinc-200/80 dark:border-slate-800 space-y-3">
+                <h3 className="text-sm font-semibold text-zinc-950 dark:text-white">{copy.scopeHeading}</h3>
                 <ul className="space-y-2">
                   {project.scope.map((line, idx) => (
                     <li
                       key={idx}
-                      className="text-sm text-zinc-700 leading-relaxed pl-4 relative before:content-['–'] before:absolute before:left-0 before:text-zinc-400"
+                      className="text-sm text-zinc-700 dark:text-slate-300 leading-relaxed pl-4 relative before:content-['–'] before:absolute before:left-0 before:text-zinc-400 dark:before:text-slate-500"
                     >
                       {line}
                     </li>
@@ -130,8 +130,8 @@ export function ProjectModal({
                 </ul>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-zinc-200/80">
-                <span className="text-xs text-zinc-500">{copy.footerPrompt}</span>
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-zinc-200/80 dark:border-slate-800">
+                <span className="text-xs text-zinc-500 dark:text-slate-400">{copy.footerPrompt}</span>
                 <button
                   type="button"
                   onClick={() => {
