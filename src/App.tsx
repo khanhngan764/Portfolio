@@ -150,6 +150,7 @@ export default function App() {
   const [highlightedSection, setHighlightedSection] = useState<string | null>(null);
 
   const rafRef = useRef<number | null>(null);
+  const scrollCleanupRef = useRef<(() => void) | null>(null);
   const highlightTimeoutRef = useRef<number | null>(null);
   const programScrollTimerRef = useRef<number | null>(null);
   const isProgrammaticScrollRef = useRef(false);
@@ -290,6 +291,7 @@ export default function App() {
     return () => {
       window.removeEventListener('scroll', handleScrollSpy);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (scrollCleanupRef.current) scrollCleanupRef.current();
       if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current);
       if (programScrollTimerRef.current) window.clearTimeout(programScrollTimerRef.current);
     };
@@ -306,7 +308,11 @@ export default function App() {
     }, 1150);
   };
 
-  const scrollToSection = (id: string, e?: MouseEvent<HTMLAnchorElement>) => {
+  const scrollToSection = (
+    id: string,
+    e?: MouseEvent<HTMLAnchorElement>,
+    options?: { gentle?: boolean }
+  ) => {
     if (e) e.preventDefault();
     updateActiveNav(id);
     setMobileMenuOpen(false);
@@ -314,6 +320,10 @@ export default function App() {
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
+    }
+    if (scrollCleanupRef.current) {
+      scrollCleanupRef.current();
+      scrollCleanupRef.current = null;
     }
     if (programScrollTimerRef.current) {
       window.clearTimeout(programScrollTimerRef.current);
@@ -349,22 +359,47 @@ export default function App() {
       return;
     }
 
-    const duration = Math.min(720, Math.max(420, Math.abs(distance) * 0.52));
-    const startTime = performance.now();
+    const duration = options?.gentle
+      ? Math.min(1650, Math.max(1050, Math.abs(distance) * 1.15))
+      : Math.min(860, Math.max(520, Math.abs(distance) * 0.58));
+    let startTime: number | null = null;
     isProgrammaticScrollRef.current = true;
 
-    const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 3.5);
+    const easeInOutCubic = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    const cleanupListeners = () => {
+      window.removeEventListener('wheel', cancelOnUserScroll);
+      window.removeEventListener('touchstart', cancelOnUserScroll);
+      scrollCleanupRef.current = null;
+    };
+
+    const cancelOnUserScroll = () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      isProgrammaticScrollRef.current = false;
+      manualNavLockRef.current = null;
+      cleanupListeners();
+    };
+
+    scrollCleanupRef.current = cleanupListeners;
+    window.addEventListener('wheel', cancelOnUserScroll, { passive: true, once: true });
+    window.addEventListener('touchstart', cancelOnUserScroll, { passive: true, once: true });
 
     const step = (now: number) => {
+      if (startTime === null) startTime = now;
       const elapsed = now - startTime;
       const progress = Math.min(1, elapsed / duration);
-      const eased = easeOutQuart(progress);
+      const eased = easeInOutCubic(progress);
       window.scrollTo(0, startY + distance * eased);
 
       if (progress < 1) {
         rafRef.current = requestAnimationFrame(step);
       } else {
         rafRef.current = null;
+        cleanupListeners();
         window.scrollTo(0, targetY);
         triggerArrivalHighlight(id);
         programScrollTimerRef.current = window.setTimeout(() => {
@@ -841,10 +876,16 @@ export default function App() {
                 <div className="lg:col-span-7 space-y-5">
                   <div className="flex items-center gap-3 text-[#22D3EE] text-lg sm:text-xl font-medium">
                     <span>{hero.greeting}</span>
-                    <span className="inline-flex items-center" aria-hidden="true">
-                      <span className="w-10 h-[1.5px] bg-[#22D3EE]/80" />
-                      <ArrowRight className="w-4 h-4 -ml-1" />
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection('about')}
+                      aria-label={lang === 'vi' ? 'Cuộn xuống phần giới thiệu' : 'Scroll to about section'}
+                      title={lang === 'vi' ? 'Cuộn xuống phần giới thiệu' : 'Scroll to about section'}
+                      className="group inline-flex items-center py-1 px-1.5 -mx-1.5 rounded-full hover:bg-white/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#22D3EE]"
+                    >
+                      <span className="w-10 h-[1.5px] bg-[#22D3EE]/80 transition-all duration-300 group-hover:w-12 group-hover:bg-[#22D3EE]" />
+                      <ArrowRight className="w-4 h-4 -ml-1 transition-transform duration-300 group-hover:translate-x-1" />
+                    </button>
                   </div>
 
                   <div className="space-y-1.5">
@@ -933,21 +974,23 @@ export default function App() {
 
               {/* Quick Scroll-Down Indicator into Content */}
               <div className="mt-6 flex justify-center lg:justify-start">
-                <a
+                <motion.a
                   href="#about"
                   onClick={(e) => scrollToSection('about', e)}
+                  whileHover={{ y: 2 }}
+                  whileTap={{ scale: 0.96 }}
                   aria-label={lang === 'vi' ? 'Cuộn xuống nội dung chính' : 'Scroll to main content'}
-                  className="inline-flex items-center gap-2 text-xs font-medium text-blue-200/90 hover:text-white transition-colors py-1.5 px-3 rounded-full bg-white/5 hover:bg-white/10 border border-white/15"
+                  className="group inline-flex items-center gap-2 text-xs font-medium text-blue-200/90 hover:text-white transition-colors py-1.5 px-3.5 rounded-full bg-white/5 hover:bg-white/12 border border-white/15 hover:border-[#22D3EE]/50"
                 >
                   <span>{lang === 'vi' ? 'Khám phá hồ sơ' : 'Explore profile'}</span>
                   <motion.span
-                    animate={{ y: [0, 3, 0] }}
+                    animate={{ y: [0, 3.5, 0] }}
                     transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
                     className="inline-flex"
                   >
-                    <ChevronDown className="w-3.5 h-3.5 text-[#22D3EE]" />
+                    <ChevronDown className="w-3.5 h-3.5 text-[#22D3EE] transition-transform duration-200 group-hover:translate-y-0.5" />
                   </motion.span>
-                </a>
+                </motion.a>
               </div>
             </div>
           </section>
@@ -959,7 +1002,7 @@ export default function App() {
           >
             <motion.div
               style={{ y: highlightStripY }}
-              className="bg-white dark:bg-[#131C31] rounded-2xl shadow-lg shadow-slate-900/5 dark:shadow-black/35 border border-zinc-200/80 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-zinc-200/80 dark:divide-slate-800 will-change-transform transition-colors duration-300"
+              className="bg-white dark:bg-[#131C31] rounded-2xl overflow-hidden shadow-lg shadow-slate-900/5 dark:shadow-black/35 border border-zinc-200/80 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-zinc-200/80 dark:divide-slate-800 will-change-transform transition-colors duration-300"
             >
               {highlights.map((item, idx) => (
                 <motion.div
@@ -972,11 +1015,13 @@ export default function App() {
                     delay: idx * 0.045,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="px-4 py-4 flex items-center gap-3 justify-start lg:justify-center"
+                  className="group px-4 py-4 flex items-center gap-3 justify-start lg:justify-center transition-colors duration-300 hover:bg-blue-50/65 dark:hover:bg-slate-800/65"
                 >
-                  <HighlightIcon type={item.iconType} />
+                  <span className="inline-flex shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-3">
+                    <HighlightIcon type={item.iconType} />
+                  </span>
                   <div className="min-w-0">
-                    <div className="text-sm font-bold text-zinc-950 dark:text-slate-100 leading-tight truncate">
+                    <div className="text-sm font-bold text-zinc-950 dark:text-slate-100 leading-tight truncate transition-colors group-hover:text-[#0B469B] dark:group-hover:text-sky-300">
                       {item.title}
                     </div>
                     <div className="text-[11px] text-zinc-600 dark:text-slate-400 leading-snug truncate">
@@ -1000,15 +1045,18 @@ export default function App() {
                 animate={highlightedSection === 'about' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
                 transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                className={`lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
+                className={`group/sec lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-300 ${
                   highlightedSection === 'about'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : ''
+                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
                 }`}
               >
                 <div>
                   <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
+                    <span
+                      className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-all duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                      aria-hidden="true"
+                    />
                     <span>{about.headingVi}</span>
                     <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
                     <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">{about.headingEn}</span>
@@ -1024,9 +1072,10 @@ export default function App() {
                       key={val}
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
+                      whileHover={{ x: 3 }}
                       viewport={{ once: true, amount: 0.2 }}
-                      transition={{ duration: 0.3, delay: 0.06 + idx * 0.055, ease: [0.16, 1, 0.3, 1] }}
-                      className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800 dark:text-slate-200"
+                      transition={{ duration: 0.28, delay: 0.06 + idx * 0.055, ease: [0.16, 1, 0.3, 1] }}
+                      className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800 dark:text-slate-200 transition-colors hover:text-[#0B469B] dark:hover:text-sky-300"
                     >
                       <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                       <span>{val}</span>
@@ -1038,10 +1087,10 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setIsCvOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-colors min-h-[38px]"
+                    className="group cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm min-h-[38px]"
                   >
                     <span>{about.moreBtn}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                   </button>
                 </div>
               </motion.section>
@@ -1054,15 +1103,18 @@ export default function App() {
                 animate={highlightedSection === 'skills' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
                 transition={{ duration: 0.38, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
-                className={`lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
+                className={`group/sec lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-300 ${
                   highlightedSection === 'skills'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : ''
+                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
                 }`}
               >
                 <div>
                   <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
+                    <span
+                      className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-all duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                      aria-hidden="true"
+                    />
                     <span>{skillsSection.headingVi}</span>
                     <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
                     <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
@@ -1083,16 +1135,18 @@ export default function App() {
                           onClick={() => setSelectedSkillId(comp.id)}
                           initial={{ opacity: 0, scale: 0.93, y: 12 }}
                           whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                          whileHover={{ y: -4, scale: 1.02 }}
+                          whileTap={{ scale: 0.97 }}
                           viewport={{ once: true, amount: 0.15 }}
                           transition={{
-                            duration: 0.32,
+                            duration: 0.28,
                             delay: idx * 0.045,
                             ease: [0.16, 1, 0.3, 1],
                           }}
-                          className={`group text-center rounded-xl border p-3.5 flex flex-col items-center justify-center gap-2 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${skillTheme.card}`}
+                          className={`group cursor-pointer relative overflow-hidden text-center rounded-xl border p-3.5 flex flex-col items-center justify-center gap-2 transition-all duration-200 hover:shadow-md hover:shadow-blue-950/10 dark:hover:shadow-black/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${skillTheme.card}`}
                         >
                           <span
-                            className={`inline-flex items-center justify-center w-9 h-9 rounded-full shadow-xs transition-transform duration-200 group-hover:scale-105 ${skillTheme.iconBg}`}
+                            className={`inline-flex items-center justify-center w-9 h-9 rounded-full shadow-xs transition-all duration-300 group-hover:scale-110 group-hover:ring-4 group-hover:ring-white/80 dark:group-hover:ring-slate-900/60 ${skillTheme.iconBg}`}
                           >
                             {renderSkillTileIcon(comp.iconKey)}
                           </span>
@@ -1122,16 +1176,19 @@ export default function App() {
                 animate={highlightedSection === 'projects' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
                 transition={{ duration: 0.38, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className={`lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
+                className={`group/sec lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-300 ${
                   highlightedSection === 'projects'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : ''
+                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-4">
                     <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                      <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
+                      <span
+                        className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-all duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                        aria-hidden="true"
+                      />
                       <span>{projectsSection.headingVi}</span>
                       <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
                       <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
@@ -1142,10 +1199,10 @@ export default function App() {
                     <button
                       type="button"
                       onClick={() => setSelectedProjectId(projects[0].id)}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-[#1D4ED8] dark:text-sky-400 hover:underline whitespace-nowrap shrink-0"
+                      className="group cursor-pointer inline-flex items-center gap-1 text-xs font-semibold text-[#1D4ED8] dark:text-sky-400 hover:underline whitespace-nowrap shrink-0"
                     >
                       <span>{projectsSection.viewAll}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                     </button>
                   </div>
                   <SectionArrivalBar active={highlightedSection === 'projects'} />
@@ -1160,46 +1217,51 @@ export default function App() {
                         key={proj.id}
                         initial={{ opacity: 0, y: 18 }}
                         whileInView={{ opacity: 1, y: 0 }}
+                        whileHover={{ y: -4 }}
                         viewport={{ once: true, amount: 0.15 }}
                         transition={{
-                          duration: 0.35,
+                          duration: 0.3,
                           delay: idx * 0.065,
                           ease: [0.16, 1, 0.3, 1],
                         }}
-                        className={`bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between transition-all hover:border-zinc-300 dark:hover:border-slate-700 hover:shadow-md dark:hover:shadow-black/30 ${
+                        className={`group/card bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between transition-all duration-300 hover:border-[#1D4ED8]/45 dark:hover:border-sky-400/50 hover:shadow-xl hover:shadow-blue-950/10 dark:hover:shadow-black/45 ${
                           isWideCard ? 'sm:col-span-2' : ''
                         }`}
                       >
                         <button
                           type="button"
                           onClick={() => setSelectedProjectId(proj.id)}
-                          className={`text-left flex flex-col flex-1 w-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${
+                          className={`cursor-pointer text-left flex flex-col flex-1 w-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${
                             isWideCard ? 'sm:flex-row sm:items-stretch' : ''
                           }`}
                         >
                           <div
-                            className={`w-full aspect-[16/9] overflow-hidden bg-zinc-900 shrink-0 ${
+                            className={`relative w-full aspect-[16/9] overflow-hidden bg-zinc-900 shrink-0 [&>svg]:transition-transform [&>svg]:duration-500 group-hover/card:[&>svg]:scale-[1.04] ${
                               isWideCard ? 'sm:w-[46%] sm:aspect-[16/10]' : ''
                             }`}
                           >
                             <ProjectCardArtwork visualType={proj.visualType} />
+                            <span
+                              aria-hidden="true"
+                              className="pointer-events-none absolute inset-y-0 left-0 w-[60%] -translate-x-[170%] skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-0 ease-out group-hover/card:translate-x-[290%] group-hover/card:duration-700"
+                            />
                           </div>
 
                           <div className="p-3.5 flex-1 flex flex-col justify-between gap-3">
                             <div className="space-y-1">
-                              <h3 className="text-[13px] font-bold text-zinc-950 dark:text-slate-100 leading-snug line-clamp-2">
+                              <h3 className="text-[13px] font-bold text-zinc-950 dark:text-slate-100 leading-snug line-clamp-2 transition-colors group-hover/card:text-[#0B469B] dark:group-hover/card:text-sky-300">
                                 {proj.shortTitle}
                               </h3>
                               <p className="text-[11px] text-zinc-500 dark:text-slate-400">{proj.subtitle}</p>
                             </div>
 
                             <span
-                              className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-[#1D4ED8] dark:text-sky-300 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full hover:bg-blue-50 dark:hover:bg-sky-950/50 transition-colors ${
+                              className={`cursor-pointer inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-[#1D4ED8] dark:text-sky-300 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-all duration-200 group-hover/card:bg-[#1D4ED8] group-hover/card:text-white group-hover/card:border-[#1D4ED8] dark:group-hover/card:bg-sky-500 dark:group-hover/card:text-white dark:group-hover/card:border-sky-500 ${
                                 isWideCard ? 'sm:w-auto sm:self-start sm:px-4 w-full' : 'w-full'
                               }`}
                             >
                               <span>{projectsSection.viewDetails}</span>
-                              <ArrowRight className="w-3 h-3" />
+                              <ArrowRight className="w-3 h-3 transition-transform duration-200 group-hover/card:translate-x-0.5" />
                             </span>
                           </div>
                         </button>
@@ -1220,15 +1282,18 @@ export default function App() {
                 animate={highlightedSection === 'experience' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
                 transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-                className={`lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
+                className={`group/sec lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-300 ${
                   highlightedSection === 'experience'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : ''
+                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
                 }`}
               >
                 <div>
                   <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
+                    <span
+                      className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-all duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                      aria-hidden="true"
+                    />
                     <span>{experienceSection.headingVi}</span>
                     <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
                     <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
@@ -1246,7 +1311,7 @@ export default function App() {
                         whileInView={{ scale: 1, opacity: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.3 }}
-                        className="w-2.5 h-2.5 rounded-full border-2 border-[#1D4ED8] dark:border-sky-400 bg-white dark:bg-[#0B1120] inline-block"
+                        className="w-2.5 h-2.5 rounded-full border-2 border-[#1D4ED8] dark:border-sky-400 bg-white dark:bg-[#0B1120] inline-block transition-transform duration-300 group-hover/sec:scale-125"
                       />
                       <span className="text-xs font-bold text-[#1D4ED8] dark:text-sky-400 font-mono tabular-nums">
                         {experiences[0].period}
@@ -1267,13 +1332,14 @@ export default function App() {
                           key={idx}
                           initial={{ opacity: 0, x: -8 }}
                           whileInView={{ opacity: 1, x: 0 }}
+                          whileHover={{ x: 3 }}
                           viewport={{ once: true, amount: 0.2 }}
                           transition={{
                             duration: 0.28,
                             delay: 0.05 + idx * 0.05,
                             ease: [0.16, 1, 0.3, 1],
                           }}
-                          className="text-xs text-zinc-700 dark:text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8] dark:before:text-sky-400"
+                          className="text-xs text-zinc-700 dark:text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8] dark:before:text-sky-400 transition-colors hover:text-zinc-950 dark:hover:text-white"
                         >
                           {item}
                         </motion.li>
@@ -1283,10 +1349,10 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => setIsCvOpen(true)}
-                        className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-colors"
+                        className="group cursor-pointer inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                       >
                         <span>{experienceSection.viewDetails}</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                       </button>
                     </div>
                   </div>
@@ -1301,15 +1367,18 @@ export default function App() {
                 animate={highlightedSection === 'education' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
                 transition={{ duration: 0.38, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
-                className={`lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
+                className={`group/sec lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-300 ${
                   highlightedSection === 'education'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : ''
+                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
                 }`}
               >
                 <div>
                   <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
+                    <span
+                      className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-all duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                      aria-hidden="true"
+                    />
                     <span>{educationSection.headingVi}</span>
                     <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
                     <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
@@ -1319,13 +1388,13 @@ export default function App() {
                   <SectionArrivalBar active={highlightedSection === 'education'} />
                 </div>
 
-                <div className="flex items-start gap-3.5">
+                <div className="group/edu flex items-start gap-3.5">
                   <motion.div
                     initial={{ scale: 0.85, rotate: -6, opacity: 0 }}
                     whileInView={{ scale: 1, rotate: 0, opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.35, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                    className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0"
+                    className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0 transition-all duration-300 group-hover/edu:scale-105 group-hover/edu:-rotate-3 group-hover/edu:shadow-md group-hover/edu:border-amber-300 dark:group-hover/edu:border-amber-500/60"
                   >
                     <Award className="w-6 h-6 text-[#D97706] dark:text-amber-400" strokeWidth={1.8} />
                   </motion.div>
@@ -1366,15 +1435,18 @@ export default function App() {
                 animate={highlightedSection === 'contact' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
                 transition={{ duration: 0.38, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className={`lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
+                className={`group/sec lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-300 ${
                   highlightedSection === 'contact'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : ''
+                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
                 }`}
               >
                 <div>
                   <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                    <span className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center" aria-hidden="true" />
+                    <span
+                      className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-all duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                      aria-hidden="true"
+                    />
                     <span>{contactSection.headingVi}</span>
                     <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
                     <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
@@ -1392,7 +1464,7 @@ export default function App() {
                         {contactSection.phoneLabel}{' '}
                         <a
                           href={`tel:${profile.phone}`}
-                          className="font-semibold text-zinc-950 dark:text-slate-100 font-mono tabular-nums hover:text-[#1D4ED8] dark:hover:text-sky-400"
+                          className="font-semibold text-zinc-950 dark:text-slate-100 font-mono tabular-nums hover:text-[#1D4ED8] dark:hover:text-sky-400 transition-colors"
                         >
                           {profile.phoneDisplay}
                         </a>
@@ -1401,7 +1473,7 @@ export default function App() {
                         type="button"
                         onClick={() => handleCopy(profile.phone, 'phone')}
                         aria-label="Copy phone"
-                        className="text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 p-1"
+                        className="text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md p-1 transition-colors"
                       >
                         {copiedField === 'phone' ? (
                           <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -1417,7 +1489,7 @@ export default function App() {
                         {contactSection.emailLabel}{' '}
                         <a
                           href={`mailto:${profile.email}`}
-                          className="font-semibold text-zinc-950 dark:text-slate-100 hover:text-[#1D4ED8] dark:hover:text-sky-400"
+                          className="font-semibold text-zinc-950 dark:text-slate-100 hover:text-[#1D4ED8] dark:hover:text-sky-400 transition-colors"
                         >
                           {profile.email}
                         </a>
@@ -1426,7 +1498,7 @@ export default function App() {
                         type="button"
                         onClick={() => handleCopy(profile.email, 'email')}
                         aria-label="Copy email"
-                        className="text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 p-1 shrink-0"
+                        className="text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md p-1 shrink-0 transition-colors"
                       >
                         {copiedField === 'email' ? (
                           <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -1453,7 +1525,7 @@ export default function App() {
                           setContactSubject('');
                           setIsContactOpen(true);
                         }}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0B469B] hover:bg-[#1D4ED8] dark:bg-sky-600 dark:hover:bg-sky-500 rounded-full transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#0B469B] hover:bg-[#1D4ED8] dark:bg-sky-600 dark:hover:bg-sky-500 rounded-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                       >
                         <Send className="w-3 h-3" />
                         <span>{contactSection.sendMsgBtn}</span>
@@ -1464,9 +1536,10 @@ export default function App() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.92 }}
                     whileInView={{ opacity: 1, scale: 1 }}
+                    whileHover={{ scale: 1.05, y: -2 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.35, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-                    className="flex flex-col items-center gap-1.5 shrink-0"
+                    transition={{ duration: 0.3, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    className="flex flex-col items-center gap-1.5 shrink-0 cursor-default"
                   >
                     <QrCodeGraphic />
                     <span className="text-[10.5px] font-medium text-zinc-600 dark:text-slate-400 text-center max-w-[84px] leading-tight">
@@ -1544,16 +1617,18 @@ export default function App() {
           {showScrollTop && (
             <motion.button
               type="button"
-              onClick={() => scrollToSection('top')}
+              onClick={() => scrollToSection('top', undefined, { gentle: true })}
               aria-label={lang === 'vi' ? 'Lên đầu trang' : 'Back to top'}
               title={lang === 'vi' ? 'Lên đầu trang' : 'Back to top'}
               initial={{ opacity: 0, y: 14, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 14, scale: 0.9 }}
+              whileHover={{ y: -3, scale: 1.06 }}
+              whileTap={{ scale: 0.92 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed bottom-5 right-5 z-30 inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#0B469B] hover:bg-[#1D4ED8] dark:bg-sky-600 dark:hover:bg-sky-500 text-white shadow-lg shadow-blue-950/25 dark:shadow-black/40 border border-white/20 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+              className="group fixed bottom-5 right-5 z-30 inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#0B469B] hover:bg-[#1D4ED8] dark:bg-sky-600 dark:hover:bg-sky-500 text-white shadow-lg shadow-blue-950/25 dark:shadow-black/40 border border-white/20 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
             >
-              <ArrowUp className="w-5 h-5" strokeWidth={2.2} />
+              <ArrowUp className="w-5 h-5 transition-transform duration-200 group-hover:-translate-y-0.5" strokeWidth={2.2} />
             </motion.button>
           )}
         </AnimatePresence>

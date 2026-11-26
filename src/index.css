@@ -17,6 +17,11 @@
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
   }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 @keyframes marquee-scroll {
