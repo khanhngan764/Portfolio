@@ -901,14 +901,20 @@ export default function App() {
 
                 {/* Right Hero Portrait + Technology Quote */}
                 <div className="lg:col-span-5 flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-6">
-                  <div className="w-[215px] sm:w-[235px] rounded-2xl overflow-hidden border border-white/25 bg-white/10 p-1.5 backdrop-blur-sm shadow-2xl shrink-0">
-                    <ResilientImage
-                      src={profile.portraitImage}
-                      alt={`${profile.fullName} — IT Supervisor`}
-                      fallbackTitle={profile.fullName}
-                      imgClassName="object-top"
-                      className="w-full aspect-[7/10] rounded-xl"
-                    />
+                  <div className="group relative w-[215px] sm:w-[235px] rounded-2xl overflow-hidden border border-white/25 hover:border-[#38BDF8]/75 bg-white/10 p-1.5 backdrop-blur-sm shadow-2xl hover:shadow-[0_14px_34px_rgba(34,211,238,0.25)] shrink-0 transition-all duration-500">
+                    <div className="relative overflow-hidden rounded-xl">
+                      <ResilientImage
+                        src={profile.portraitImage}
+                        alt={`${profile.fullName} — IT Supervisor`}
+                        fallbackTitle={profile.fullName}
+                        imgClassName="object-top"
+                        className="w-full aspect-[7/10] rounded-xl"
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-y-0 left-0 w-[68%] -translate-x-[170%] skew-x-[-22deg] bg-gradient-to-r from-transparent via-white/55 to-transparent transition-transform duration-0 ease-out group-hover:translate-x-[280%] group-hover:duration-700"
+                      />
+                    </div>
                   </div>
 
                   <div className="text-center sm:text-left space-y-2 max-w-[240px]">
