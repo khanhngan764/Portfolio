@@ -5,6 +5,7 @@ import {
   motion,
   useScroll,
   useSpring,
+  useTransform,
 } from 'motion/react';
 import {
   ArrowRight,
@@ -179,12 +180,20 @@ export default function App() {
     return top;
   };
 
-  const { scrollYProgress } = useScroll();
+  const { scrollY, scrollYProgress } = useScroll();
+  const smoothScrollY = useSpring(scrollY, {
+    stiffness: 260,
+    damping: 32,
+    mass: 0.45,
+  });
   const scrollProgressScale = useSpring(scrollYProgress, {
-    stiffness: 420,
-    damping: 42,
+    stiffness: 340,
+    damping: 36,
     restDelta: 0.001,
   });
+  const heroBackdropY = useTransform(smoothScrollY, [0, 480], [0, 38]);
+  const heroBackdropOpacity = useTransform(smoothScrollY, [0, 480], [0.65, 0.25]);
+  const highlightStripY = useTransform(smoothScrollY, [0, 320], [0, -10]);
 
   const content = CONTENT[lang];
   const {
@@ -625,12 +634,16 @@ export default function App() {
           {/* HERO BANNER — Deep Navy / Tech Network Canvas */}
           <section className="relative overflow-hidden bg-gradient-to-br from-[#041230] via-[#0A2B66] to-[#08204E] text-white">
             {/* Architectural SVG Server & Animated Digital Sphere Backdrop */}
-            <svg
+            <motion.div
               aria-hidden="true"
-              viewBox="0 0 1440 520"
-              preserveAspectRatio="xMidYMid slice"
-              className="absolute inset-0 w-full h-full pointer-events-none opacity-65 transform-gpu [contain:layout_paint]"
+              style={{ y: heroBackdropY, opacity: heroBackdropOpacity }}
+              className="absolute inset-0 pointer-events-none will-change-transform transform-gpu [contain:layout_paint]"
             >
+              <svg
+                viewBox="0 0 1440 520"
+                preserveAspectRatio="xMidYMid slice"
+                className="w-full h-full"
+              >
               <defs>
                 <radialGradient id="globe-glow" cx="52%" cy="54%" r="36%">
                   <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.65" />
@@ -878,7 +891,8 @@ export default function App() {
                 animate={{ strokeDashoffset: [0, -158] }}
                 transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
               />
-            </svg>
+              </svg>
+            </motion.div>
 
             <div className="relative z-10 max-w-[1340px] mx-auto px-6 lg:px-10 pt-10 pb-20 md:pt-14 md:pb-24">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
@@ -1006,14 +1020,29 @@ export default function App() {
           </section>
 
           {/* FLOATING 6-COLUMN HIGHLIGHT STRIP */}
-          <section
+          <motion.section
             aria-label="Điểm nhấn chuyên môn"
-            className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-10 -mt-10 relative z-20"
+            style={{ y: highlightStripY }}
+            className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-10 -mt-10 relative z-20 will-change-transform transform-gpu"
           >
-            <div className="bg-white dark:bg-[#131C31] rounded-2xl overflow-hidden shadow-lg shadow-slate-900/5 dark:shadow-black/35 border border-zinc-200/80 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-zinc-200/80 dark:divide-slate-800 transition-colors duration-300">
-              {highlights.map((item) => (
-                <div
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.12 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="bg-white dark:bg-[#131C31] rounded-2xl overflow-hidden shadow-lg shadow-slate-900/5 dark:shadow-black/35 border border-zinc-200/80 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-zinc-200/80 dark:divide-slate-800 transition-colors duration-300"
+            >
+              {highlights.map((item, idx) => (
+                <motion.div
                   key={item.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  transition={{
+                    duration: 0.4,
+                    delay: idx * 0.045,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                   className="group px-4 py-4 flex items-center gap-3 justify-start lg:justify-center transition-colors duration-300 hover:bg-blue-50/65 dark:hover:bg-slate-800/65"
                 >
                   <span className="inline-flex shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-3">
@@ -1027,10 +1056,10 @@ export default function App() {
                       {item.subtitle}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
-            </div>
-          </section>
+            </motion.div>
+          </motion.section>
 
           {/* MAIN CONTENT CONTAINER */}
           <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-10 py-10 space-y-10">
@@ -1039,11 +1068,11 @@ export default function App() {
               {/* Column 1: Về tôi | About Me */}
               <motion.section
                 id="about"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'about' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
                 className={`group/sec lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'about'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1066,14 +1095,19 @@ export default function App() {
                 <p className="text-[13.5px] text-zinc-700 dark:text-slate-300 leading-relaxed">{about.summary}</p>
 
                 <ul className="space-y-2 pt-1">
-                  {about.values.map((val) => (
-                    <li
+                  {about.values.map((val, idx) => (
+                    <motion.li
                       key={val}
-                      className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800 dark:text-slate-200 transition-[transform,color] duration-200 hover:translate-x-1 hover:text-[#0B469B] dark:hover:text-sky-300"
+                      initial={{ opacity: 0, x: -12 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      whileHover={{ x: 4, transition: { duration: 0.18, delay: 0 } }}
+                      viewport={{ once: true, amount: 0.15 }}
+                      transition={{ duration: 0.38, delay: 0.05 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                      className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800 dark:text-slate-200 transition-colors duration-200 hover:text-[#0B469B] dark:hover:text-sky-300"
                     >
                       <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                       <span>{val}</span>
-                    </li>
+                    </motion.li>
                   ))}
                 </ul>
 
@@ -1092,11 +1126,11 @@ export default function App() {
               {/* Column 2: Năng lực chuyên môn | Core Skills */}
               <motion.section
                 id="skills"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'skills' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.35, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.52, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
                 className={`group/sec lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'skills'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1120,16 +1154,19 @@ export default function App() {
 
                 <div className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-3.5 shadow-xs transition-colors duration-300">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                    {competencies.map((comp) => {
+                    {competencies.map((comp, idx) => {
                       const skillTheme = SKILL_THEME_CLASSES[comp.theme];
                       return (
                         <motion.button
                           key={comp.id}
                           type="button"
                           onClick={() => setSelectedSkillId(comp.id)}
-                          whileHover={{ y: -4, scale: 1.02 }}
-                          whileTap={{ scale: 0.97 }}
-                          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                          initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                          whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                          whileHover={{ y: -4, scale: 1.02, transition: { duration: 0.2, delay: 0, ease: [0.16, 1, 0.3, 1] } }}
+                          whileTap={{ scale: 0.97, transition: { duration: 0.12, delay: 0 } }}
+                          viewport={{ once: true, amount: 0.1 }}
+                          transition={{ duration: 0.4, delay: idx * 0.045, ease: [0.22, 1, 0.36, 1] }}
                           className={`group cursor-pointer relative overflow-hidden text-center rounded-xl border p-3.5 flex flex-col items-center justify-center gap-2 transition-[background-color,border-color,box-shadow] duration-200 hover:shadow-md hover:shadow-blue-950/10 dark:hover:shadow-black/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${skillTheme.card}`}
                         >
                           <span
@@ -1158,11 +1195,11 @@ export default function App() {
               {/* Column 3: Dự án tiêu biểu | Featured Projects */}
               <motion.section
                 id="projects"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'projects' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.35, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.52, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
                 className={`group/sec lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'projects'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1196,14 +1233,17 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  {projects.map((proj) => {
+                  {projects.map((proj, idx) => {
                     const isWideCard =
                       projects.length % 2 === 1 && proj === projects[projects.length - 1];
                     return (
                       <motion.article
                         key={proj.id}
-                        whileHover={{ y: -4 }}
-                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        whileHover={{ y: -4, transition: { duration: 0.2, delay: 0, ease: [0.16, 1, 0.3, 1] } }}
+                        viewport={{ once: true, amount: 0.1 }}
+                        transition={{ duration: 0.44, delay: idx * 0.065, ease: [0.22, 1, 0.36, 1] }}
                         className={`group/card bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between transition-[border-color,box-shadow] duration-300 hover:border-[#1D4ED8]/45 dark:hover:border-sky-400/50 hover:shadow-xl hover:shadow-blue-950/10 dark:hover:shadow-black/45 ${
                           isWideCard ? 'sm:col-span-2' : ''
                         }`}
@@ -1257,11 +1297,11 @@ export default function App() {
               {/* Col 1: Kinh nghiệm làm việc | Work Experience */}
               <motion.section
                 id="experience"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'experience' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
                 className={`group/sec lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'experience'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1302,12 +1342,17 @@ export default function App() {
                     </h3>
                     <ul className="space-y-1.5">
                       {experiences[0].highlights.map((item, idx) => (
-                        <li
+                        <motion.li
                           key={idx}
-                          className="text-xs text-zinc-700 dark:text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8] dark:before:text-sky-400 transition-[transform,color] duration-200 hover:translate-x-1 hover:text-zinc-950 dark:hover:text-white"
+                          initial={{ opacity: 0, x: -12 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          whileHover={{ x: 4, transition: { duration: 0.18, delay: 0 } }}
+                          viewport={{ once: true, amount: 0.15 }}
+                          transition={{ duration: 0.38, delay: 0.05 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                          className="text-xs text-zinc-700 dark:text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8] dark:before:text-sky-400 transition-colors duration-200 hover:text-zinc-950 dark:hover:text-white"
                         >
                           {item}
-                        </li>
+                        </motion.li>
                       ))}
                     </ul>
                     <div className="pt-1 flex justify-end">
@@ -1327,11 +1372,11 @@ export default function App() {
               {/* Col 2: Trình độ học vấn | Education */}
               <motion.section
                 id="education"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'education' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.35, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.52, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
                 className={`group/sec lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'education'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1354,9 +1399,17 @@ export default function App() {
                 </div>
 
                 <div className="group/edu flex items-start gap-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center shrink-0 transition-[transform,border-color,box-shadow] duration-300 group-hover/edu:scale-105 group-hover/edu:-rotate-3 group-hover/edu:shadow-md group-hover/edu:border-amber-300 dark:group-hover/edu:border-amber-500/60">
-                    <Award className="w-6 h-6 text-[#D97706] dark:text-amber-400" strokeWidth={1.8} />
-                  </div>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.85, rotate: -6 }}
+                    whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                    viewport={{ once: true, amount: 0.2 }}
+                    transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                    className="shrink-0"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center transition-[transform,border-color,box-shadow] duration-300 group-hover/edu:scale-105 group-hover/edu:-rotate-3 group-hover/edu:shadow-md group-hover/edu:border-amber-300 dark:group-hover/edu:border-amber-500/60">
+                      <Award className="w-6 h-6 text-[#D97706] dark:text-amber-400" strokeWidth={1.8} />
+                    </div>
+                  </motion.div>
                   <div className="space-y-1.5">
                     <div className="text-sm font-bold text-zinc-950 dark:text-slate-100 leading-snug">
                       {educationSection.degree}
@@ -1365,13 +1418,17 @@ export default function App() {
                       {educationSection.school}
                     </div>
                     <ul className="space-y-1 pt-1">
-                      {educationSection.details.map((detail) => (
-                        <li
+                      {educationSection.details.map((detail, idx) => (
+                        <motion.li
                           key={detail}
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true, amount: 0.15 }}
+                          transition={{ duration: 0.36, delay: 0.08 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
                           className="text-xs text-zinc-600 dark:text-slate-400 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-zinc-400 dark:before:text-slate-500"
                         >
                           {detail}
-                        </li>
+                        </motion.li>
                       ))}
                     </ul>
                   </div>
@@ -1381,11 +1438,11 @@ export default function App() {
               {/* Col 3: Thông tin liên hệ | Contact + QR */}
               <motion.section
                 id="contact"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'contact' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.35, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.52, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
                 className={`group/sec lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'contact'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1490,11 +1547,11 @@ export default function App() {
                     rel="noreferrer"
                     aria-label={lang === 'vi' ? 'Mở Zalo Hoàng Văn Thiện' : 'Open Zalo'}
                     title={profile.zaloUrl}
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.3, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+                    initial={{ opacity: 0, scale: 0.9, y: 14 }}
+                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                    whileHover={{ scale: 1.05, y: -2, transition: { duration: 0.2, delay: 0, ease: [0.16, 1, 0.3, 1] } }}
+                    viewport={{ once: true, amount: 0.15 }}
+                    transition={{ duration: 0.44, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
                     className="group flex flex-col items-center gap-1.5 shrink-0 cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1D4ED8]"
                   >
                     <QrCodeGraphic url={profile.zaloUrl} />
@@ -1509,7 +1566,13 @@ export default function App() {
         </main>
 
         {/* DARK NAVY FOOTER */}
-        <footer className="bg-[#06183A] dark:bg-[#050A18] text-white border-t border-blue-950 dark:border-slate-800/90 transition-colors duration-300">
+        <motion.footer
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="bg-[#06183A] dark:bg-[#050A18] text-white border-t border-blue-950 dark:border-slate-800/90 transition-colors duration-300"
+        >
           <div className="max-w-[1340px] mx-auto px-6 lg:px-10 py-6 flex flex-col md:flex-row items-center justify-between gap-5">
             <div className="flex items-center gap-3 shrink-0">
               <HTMonogram variant="dark" />
@@ -1566,7 +1629,7 @@ export default function App() {
               </span>
             </div>
           </div>
-        </footer>
+        </motion.footer>
 
         {/* Floating Quick Scroll-to-Top Button */}
         <AnimatePresence>
