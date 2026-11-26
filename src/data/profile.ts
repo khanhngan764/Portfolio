@@ -2,6 +2,12 @@ export type Language = 'vi' | 'en';
 
 export type SkillColorTheme = 'blue' | 'rose' | 'emerald' | 'indigo' | 'cyan' | 'amber';
 
+export interface SkillPillar {
+  label: string;
+  stack: string;
+  detail: string;
+}
+
 export interface CompetencyCard {
   id: string;
   index: string;
@@ -10,6 +16,7 @@ export interface CompetencyCard {
   theme: SkillColorTheme;
   iconKey: 'server' | 'database' | 'shield' | 'code' | 'map' | 'users';
   items: string[];
+  pillars?: SkillPillar[];
 }
 
 export interface ProjectItem {
@@ -385,14 +392,34 @@ export const CONTENT: Record<Language, LocalizedContent> = {
         id: 'comp-dev',
         index: '04.',
         title: 'Phát triển phần mềm',
-        shortSubtitle: '(C# .NET, ReactJS)',
+        shortSubtitle: '(C# .NET, ReactJS, API)',
         theme: 'indigo',
         iconKey: 'code',
+        pillars: [
+          {
+            label: 'Thiết kế Database',
+            stack: 'Oracle 19c/21c · SQL Server · ERD & Indexing',
+            detail:
+              'Thiết kế lược đồ quan hệ chuẩn hóa, tối ưu truy vấn SQL/PL-SQL, đánh chỉ mục hiệu năng cao và đảm bảo tính toàn vẹn dữ liệu doanh nghiệp.',
+          },
+          {
+            label: 'Frontend Hiện đại',
+            stack: 'ReactJS · TypeScript · Tailwind CSS · Responsive UI/UX',
+            detail:
+              'Phát triển giao diện SPA theo kiến trúc Component tái sử dụng, tối ưu trải nghiệm người dùng (UI/UX) và tương thích mượt mà trên cả Web lẫn Mobile.',
+          },
+          {
+            label: 'Backend RESTful API',
+            stack: 'C# .NET / ASP.NET Core · Node.js · JWT & OpenAPI',
+            detail:
+              'Xây dựng hệ thống RESTful API theo kiến trúc phân lớp hiện đại, chuẩn hóa endpoint JSON, xác thực phân quyền bảo mật (JWT/RBAC) và xử lý bất đồng bộ hiệu năng cao.',
+          },
+        ],
         items: [
-          'C# .NET: Phân tích nghiệp vụ, thiết kế và phát triển ứng dụng quản lý.',
-          'ReactJS, Node.js: Phát triển ứng dụng web nội bộ hiện đại.',
-          'Thiết kế và tích hợp cơ sở dữ liệu Oracle Database hiệu năng cao.',
-          'Xây dựng giải pháp số hóa và tự động hóa quy trình nghiệp vụ.',
+          'Thiết kế Database: Mô hình hóa dữ liệu quan hệ (ERD), chuẩn hóa lược đồ trên Oracle Database & SQL Server, tối ưu hóa truy vấn và Stored Procedure.',
+          'Frontend hiện đại: Xây dựng ứng dụng Web SPA với ReactJS, TypeScript, kiến trúc Component và giao diện responsive chuẩn UX/UI.',
+          'Backend RESTful API: Phát triển API chuẩn REST với C# .NET / ASP.NET Core & Node.js, tích hợp bảo mật JWT, phân quyền RBAC và tài liệu hóa OpenAPI.',
+          'Kiến trúc đồng bộ: Kết nối liền mạch Web, Mobile App và CSDL lõi giúp số hóa và tự động hóa quy trình nghiệp vụ đơn vị.',
         ],
       },
       {
@@ -808,14 +835,34 @@ export const CONTENT: Record<Language, LocalizedContent> = {
         id: 'comp-dev',
         index: '04.',
         title: 'Software Dev',
-        shortSubtitle: '(C# .NET, ReactJS)',
+        shortSubtitle: '(C# .NET, ReactJS, API)',
         theme: 'indigo',
         iconKey: 'code',
+        pillars: [
+          {
+            label: 'Database Design',
+            stack: 'Oracle 19c/21c · SQL Server · ERD & Indexing',
+            detail:
+              'Normalized relational schema modeling, high-performance SQL/PL-SQL tuning, strategic indexing, and strict enterprise data integrity.',
+          },
+          {
+            label: 'Modern Frontend',
+            stack: 'ReactJS · TypeScript · Tailwind CSS · Responsive UI/UX',
+            detail:
+              'Component-driven SPA engineering with clean state management, intuitive UI/UX, and seamless responsiveness across desktop and mobile.',
+          },
+          {
+            label: 'Backend RESTful API',
+            stack: 'C# .NET / ASP.NET Core · Node.js · JWT & OpenAPI',
+            detail:
+              'Layered RESTful API architecture with standardized JSON contracts, JWT/RBAC security, asynchronous processing, and scalable integration.',
+          },
+        ],
         items: [
-          'C# .NET: Requirements analysis, architecture, and management applications.',
-          'ReactJS & Node.js: Modern internal web portal engineering.',
-          'High-performance Oracle Database schema design and integration.',
-          'Workflow digitization and operational process automation.',
+          'Database Design: Relational modeling (ERD), schema normalization on Oracle & SQL Server, query tuning, and Stored Procedures.',
+          'Modern Frontend: Component-based SPA interfaces built with ReactJS, TypeScript, and responsive UI/UX principles.',
+          'Backend RESTful API: Clean-architecture REST services in C# .NET / ASP.NET Core & Node.js with JWT authentication, RBAC, and OpenAPI specs.',
+          'End-to-End Integration: Seamless Web, Mobile, and core DB connectivity to digitize and automate enterprise workflows.',
         ],
       },
       {

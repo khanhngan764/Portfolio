@@ -59,10 +59,12 @@ export function SkillModal({ skill, lang, onClose }: SkillModalProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.985 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full max-w-lg bg-white border border-zinc-200 rounded-2xl shadow-2xl overflow-hidden"
+            className={`w-full bg-white border border-zinc-200 rounded-2xl shadow-2xl overflow-hidden max-h-[88vh] flex flex-col ${
+              skill.pillars ? 'max-w-2xl' : 'max-w-lg'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200/80">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200/80 shrink-0">
               <div className="flex items-center gap-3">
                 <SkillIcon iconKey={skill.iconKey} />
                 <div>
@@ -82,20 +84,51 @@ export function SkillModal({ skill, lang, onClose }: SkillModalProps) {
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              <p className="text-xs font-medium text-zinc-500">
-                {lang === 'vi' ? 'Chi tiết năng lực thực tế' : 'Hands-on Competency Details'}
-              </p>
-              <ul className="space-y-2.5">
-                {skill.items.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="text-sm text-zinc-700 leading-relaxed pl-4 relative before:content-['–'] before:absolute before:left-0 before:text-[#2563EB]"
-                  >
-                    {item}
-                  </li>
-                ))}
-              </ul>
+            <div className="p-6 space-y-5 overflow-y-auto">
+              {skill.pillars && skill.pillars.length > 0 && (
+                <div className="space-y-2.5">
+                  <p className="text-xs font-semibold text-[#4F46E5] uppercase tracking-wider">
+                    {lang === 'vi'
+                      ? 'Kiến trúc phát triển theo hướng lập trình hiện đại'
+                      : 'Modern Full-Stack Development Architecture'}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {skill.pillars.map((pillar, idx) => (
+                      <div
+                        key={pillar.label}
+                        className="rounded-xl border border-indigo-200/80 bg-indigo-50/55 p-3.5 space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-zinc-950">{pillar.label}</span>
+                          <span className="font-mono text-[10px] font-semibold text-[#4F46E5]">
+                            0{idx + 1}
+                          </span>
+                        </div>
+                        <div className="font-mono text-[10.5px] font-medium text-[#4338CA] leading-snug">
+                          {pillar.stack}
+                        </div>
+                        <p className="text-xs text-zinc-600 leading-relaxed">{pillar.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2.5">
+                <p className="text-xs font-medium text-zinc-500">
+                  {lang === 'vi' ? 'Chi tiết năng lực thực tế' : 'Hands-on Competency Details'}
+                </p>
+                <ul className="space-y-2.5">
+                  {skill.items.map((item, idx) => (
+                    <li
+                      key={idx}
+                      className="text-sm text-zinc-700 leading-relaxed pl-4 relative before:content-['–'] before:absolute before:left-0 before:text-[#2563EB]"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </motion.div>
         </motion.div>
