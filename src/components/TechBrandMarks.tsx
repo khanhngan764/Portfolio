@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { Trophy, GraduationCap, ShieldCheck } from 'lucide-react';
+import QRCode from 'qrcode';
 import type { ProjectItem } from '../data/profile';
 
 export function HTMonogram({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
@@ -331,53 +333,46 @@ export function ProjectCardArtwork({
   );
 }
 
-// Deterministic crisp QR Matrix SVG (21x21 modules with 3 finder patterns)
-const QR_MATRIX: number[][] = [
-  [1,1,1,1,1,1,1,0,1,0,1,1,0,0,1,1,1,1,1,1,1],
-  [1,0,0,0,0,0,1,0,0,1,0,1,1,0,1,0,0,0,0,0,1],
-  [1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1],
-  [1,0,1,1,1,0,1,0,1,0,1,1,0,0,1,0,1,1,1,0,1],
-  [1,0,1,1,1,0,1,0,0,1,0,0,1,0,1,0,1,1,1,0,1],
-  [1,0,0,0,0,0,1,0,1,1,0,1,0,0,1,0,0,0,0,0,1],
-  [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
-  [0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0],
-  [1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,1,1,0,1,0,1],
-  [0,1,1,0,1,0,0,0,1,0,1,1,0,0,1,0,1,1,0,1,0],
-  [1,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,0,1],
-  [0,1,0,0,1,0,0,1,1,0,1,0,0,1,1,0,1,0,0,1,0],
-  [1,0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,1,0,1,1,1],
-  [0,0,0,0,0,0,0,0,1,0,1,1,0,1,0,1,0,1,0,0,1],
-  [1,1,1,1,1,1,1,0,0,1,1,0,1,0,1,0,1,1,1,0,1],
-  [1,0,0,0,0,0,1,0,1,1,0,1,0,1,1,1,0,0,1,1,0],
-  [1,0,1,1,1,0,1,0,1,0,1,0,1,1,0,0,1,1,0,1,1],
-  [1,0,1,1,1,0,1,0,0,1,1,1,0,0,1,1,0,1,1,0,0],
-  [1,0,1,1,1,0,1,0,1,0,0,1,1,1,0,1,1,0,1,1,1],
-  [1,0,0,0,0,0,1,0,1,1,1,0,0,1,1,0,1,0,0,1,0],
-  [1,1,1,1,1,1,1,0,0,1,0,1,1,0,1,1,0,1,1,0,1],
-];
+export function QrCodeGraphic({
+  url = 'https://zalo.me/0948820369',
+}: {
+  url?: string;
+}) {
+  const { size, darkCells } = useMemo(() => {
+    const qr = QRCode.create(url, { errorCorrectionLevel: 'M' });
+    const qrSize = qr.modules.size;
+    const cells: { x: number; y: number }[] = [];
+    for (let row = 0; row < qrSize; row++) {
+      for (let col = 0; col < qrSize; col++) {
+        if (qr.modules.get(row, col)) {
+          cells.push({ x: col, y: row });
+        }
+      }
+    }
+    return { size: qrSize, darkCells: cells };
+  }, [url]);
 
-export function QrCodeGraphic() {
+  const quietZone = 2;
+  const viewBoxSize = size + quietZone * 2;
+
   return (
     <svg
-      viewBox="0 0 23 23"
-      className="w-20 h-20 bg-white p-1 rounded-lg border border-zinc-200 dark:border-slate-700 shrink-0 shadow-xs"
-      aria-label="QR Code"
+      viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+      shapeRendering="crispEdges"
+      className="w-24 h-24 bg-white p-1.5 rounded-xl border border-zinc-200 dark:border-slate-700 shrink-0 shadow-xs"
+      aria-label={`QR Code: ${url}`}
     >
-      <rect width="23" height="23" fill="#FFFFFF" />
-      {QR_MATRIX.map((row, y) =>
-        row.map((cell, x) =>
-          cell ? (
-            <rect
-              key={`${x}-${y}`}
-              x={x + 1}
-              y={y + 1}
-              width="1"
-              height="1"
-              fill="#09090B"
-            />
-          ) : null
-        )
-      )}
+      <rect width={viewBoxSize} height={viewBoxSize} fill="#FFFFFF" />
+      {darkCells.map((cell) => (
+        <rect
+          key={`${cell.x}-${cell.y}`}
+          x={cell.x + quietZone}
+          y={cell.y + quietZone}
+          width="1"
+          height="1"
+          fill="#09090B"
+        />
+      ))}
     </svg>
   );
 }

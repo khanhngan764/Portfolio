@@ -142,6 +142,7 @@ export interface LocalizedContent {
     email: string;
     phone: string;
     phoneDisplay: string;
+    zaloUrl: string;
     portraitImage: string;
     cvPdfUrl: string;
     heroLead: string;
@@ -195,6 +196,7 @@ const COMMON = {
   email: 'thien_hv@yahoo.com',
   phone: '0948820369',
   phoneDisplay: '0948 820 369',
+  zaloUrl: 'https://zalo.me/0948820369',
   portraitImage: '/assets/aistudio/anhthe_af671091.jpg',
   cvPdfUrl: '/cv/CV_Hoang_Van_Thien_IT_Supervisor.pdf',
 };
@@ -315,7 +317,7 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       emailLabel: 'Email:',
       addressLabel: 'Địa chỉ:',
       addressValue: 'Đồng Nai, Việt Nam',
-      qrCaption: 'Quét QR để truy cập',
+      qrCaption: 'Quét QR kết nối Zalo',
       sendMsgBtn: 'Gửi tin nhắn trực tiếp',
       copied: 'Đã sao chép',
     },
@@ -758,7 +760,7 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       emailLabel: 'Email:',
       addressLabel: 'Location:',
       addressValue: 'Dong Nai, Vietnam',
-      qrCaption: 'Scan QR to access',
+      qrCaption: 'Scan QR for Zalo',
       sendMsgBtn: 'Send Direct Message',
       copied: 'Copied',
     },

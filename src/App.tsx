@@ -1533,19 +1533,24 @@ export default function App() {
                     </div>
                   </div>
 
-                  <motion.div
+                  <motion.a
+                    href={profile.zaloUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={lang === 'vi' ? 'Mở Zalo Hoàng Văn Thiện' : 'Open Zalo'}
+                    title={profile.zaloUrl}
                     initial={{ opacity: 0, scale: 0.92 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     whileHover={{ scale: 1.05, y: -2 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.3, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                    className="flex flex-col items-center gap-1.5 shrink-0 cursor-default"
+                    className="group flex flex-col items-center gap-1.5 shrink-0 cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1D4ED8]"
                   >
-                    <QrCodeGraphic />
-                    <span className="text-[10.5px] font-medium text-zinc-600 dark:text-slate-400 text-center max-w-[84px] leading-tight">
+                    <QrCodeGraphic url={profile.zaloUrl} />
+                    <span className="text-[10.5px] font-medium text-zinc-600 dark:text-slate-400 group-hover:text-[#0B469B] dark:group-hover:text-sky-300 text-center max-w-[96px] leading-tight transition-colors">
                       {contactSection.qrCaption}
                     </span>
-                  </motion.div>
+                  </motion.a>
                 </div>
               </motion.section>
             </div>
