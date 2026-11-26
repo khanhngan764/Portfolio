@@ -566,13 +566,16 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="text-center sm:text-left space-y-1 max-w-[180px]">
-                    <div className="font-serif italic text-xl sm:text-2xl text-white leading-snug">
-                      <span className="text-[#22D3EE] mr-1">“</span>
-                      {hero.quoteTop}
-                      <span className="block">{hero.quoteBottom}</span>
-                    </div>
-                    <div className="h-[2px] w-28 mx-auto sm:mx-0 bg-gradient-to-r from-[#22D3EE] to-transparent rounded-full mt-2" />
+                  <div className="text-center sm:text-left space-y-2 max-w-[240px]">
+                    <blockquote className="font-serif italic font-medium text-[19px] sm:text-[22px] tracking-[-0.01em] text-white leading-[1.35]">
+                      <span className="text-[#22D3EE] mr-1 not-italic font-semibold">“</span>
+                      <span>{hero.quoteTop}</span>
+                      <span className="block text-blue-50/95">
+                        {hero.quoteBottom}
+                        <span className="text-[#22D3EE] ml-1 not-italic font-semibold">”</span>
+                      </span>
+                    </blockquote>
+                    <div className="h-[2.5px] w-28 mx-auto sm:mx-0 bg-gradient-to-r from-[#22D3EE] via-[#38BDF8]/70 to-transparent rounded-full" />
                   </div>
                 </div>
               </div>

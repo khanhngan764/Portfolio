@@ -220,8 +220,8 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       lead: 'Với 16 năm kinh nghiệm trong lĩnh vực CNTT, tôi luôn nỗ lực mang đến các giải pháp công nghệ hiệu quả, an toàn và bền vững cho doanh nghiệp.',
       downloadCv: 'Tải CV (PDF)',
       contactMe: 'Liên hệ với tôi',
-      quoteTop: 'Technology',
-      quoteBottom: 'for a Better Future',
+      quoteTop: 'Công nghệ',
+      quoteBottom: 'vì Tương lai Tốt đẹp hơn',
       portraitCaption: 'Thạc sĩ CNTT · 16 năm kinh nghiệm',
     },
     highlights: [
