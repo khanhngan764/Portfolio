@@ -144,7 +144,31 @@ export default function App() {
 
   const rafRef = useRef<number | null>(null);
   const highlightTimeoutRef = useRef<number | null>(null);
+  const programScrollTimerRef = useRef<number | null>(null);
   const isProgrammaticScrollRef = useRef(false);
+  const activeNavRef = useRef<string>('top');
+  const manualNavLockRef = useRef<{ id: string; targetY: number } | null>(null);
+  const headerBarRef = useRef<HTMLDivElement | null>(null);
+
+  const updateActiveNav = (id: string) => {
+    activeNavRef.current = id;
+    setActiveNav(id);
+  };
+
+  const getHeaderHeight = () => {
+    const barHeight = headerBarRef.current?.getBoundingClientRect().height ?? 72;
+    return barHeight + 3;
+  };
+
+  const getDocumentTop = (el: HTMLElement) => {
+    let top = 0;
+    let node: HTMLElement | null = el;
+    while (node) {
+      top += node.offsetTop;
+      node = node.offsetParent as HTMLElement | null;
+    }
+    return top;
+  };
 
   const { scrollY, scrollYProgress } = useScroll();
   const scrollProgressScale = useSpring(scrollYProgress, {
@@ -153,7 +177,7 @@ export default function App() {
     restDelta: 0.001,
   });
   const heroBackdropY = useTransform(scrollY, [0, 500], [0, 64]);
-  const heroBackdropOpacity = useTransform(scrollY, [0, 460], [0.35, 0.12]);
+  const heroBackdropOpacity = useTransform(scrollY, [0, 460], [0.65, 0.22]);
   const highlightStripY = useTransform(scrollY, [0, 320], [0, -10]);
 
   const content = CONTENT[lang];
@@ -188,29 +212,64 @@ export default function App() {
 
       if (isProgrammaticScrollRef.current) return;
 
-      if (scrollTop < 180) {
-        setActiveNav('top');
+      if (manualNavLockRef.current) {
+        if (Math.abs(scrollTop - manualNavLockRef.current.targetY) < 75) {
+          return;
+        }
+        manualNavLockRef.current = null;
+      }
+
+      if (scrollTop < 160) {
+        updateActiveNav('top');
         return;
+      }
+
+      const headerHeight = getHeaderHeight();
+      const measured = sectionOrder
+        .map((id) => {
+          const el = document.getElementById(id);
+          if (!el) return null;
+          const rect = el.getBoundingClientRect();
+          return { id, top: rect.top };
+        })
+        .filter((item): item is { id: string; top: number } => item !== null);
+
+      if (measured.length === 0) return;
+
+      // Group side-by-side Bento columns into visual rows based on vertical alignment
+      const rows: { top: number; ids: string[] }[] = [];
+      for (const item of measured) {
+        const lastRow = rows[rows.length - 1];
+        if (lastRow && Math.abs(item.top - lastRow.top) < 40) {
+          lastRow.ids.push(item.id);
+        } else {
+          rows.push({ top: item.top, ids: [item.id] });
+        }
       }
 
       const nearBottom =
-        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 48;
+        window.innerHeight + scrollTop >= document.documentElement.scrollHeight - 24;
       if (nearBottom) {
-        setActiveNav('contact');
+        const lastRow = rows[rows.length - 1];
+        if (lastRow.ids.includes(activeNavRef.current)) {
+          return;
+        }
+        updateActiveNav(lastRow.ids[lastRow.ids.length - 1]);
         return;
       }
 
-      const anchorY = 140;
-      let currentId = 'about';
-      for (const id of sectionOrder) {
-        const el = document.getElementById(id);
-        if (!el) continue;
-        const rect = el.getBoundingClientRect();
-        if (rect.top <= anchorY) {
-          currentId = id;
+      const anchorY = headerHeight + 84;
+      let activeRow = rows[0];
+      for (const row of rows) {
+        if (row.top <= anchorY) {
+          activeRow = row;
         }
       }
-      setActiveNav(currentId);
+
+      if (activeRow.ids.includes(activeNavRef.current)) {
+        return;
+      }
+      updateActiveNav(activeRow.ids[0]);
     };
 
     window.addEventListener('scroll', handleScrollSpy, { passive: true });
@@ -218,6 +277,7 @@ export default function App() {
       window.removeEventListener('scroll', handleScrollSpy);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current);
+      if (programScrollTimerRef.current) window.clearTimeout(programScrollTimerRef.current);
     };
   }, []);
 
@@ -234,12 +294,16 @@ export default function App() {
 
   const scrollToSection = (id: string, e?: MouseEvent<HTMLAnchorElement>) => {
     if (e) e.preventDefault();
-    setActiveNav(id);
+    updateActiveNav(id);
     setMobileMenuOpen(false);
 
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
+    }
+    if (programScrollTimerRef.current) {
+      window.clearTimeout(programScrollTimerRef.current);
+      programScrollTimerRef.current = null;
     }
 
     const prefersReduced =
@@ -250,11 +314,13 @@ export default function App() {
     if (id !== 'top') {
       const targetEl = document.getElementById(id);
       if (!targetEl) return;
-      const headerOffset = 94;
-      const rawTop = targetEl.getBoundingClientRect().top + window.scrollY - headerOffset;
+      const headerOffset = getHeaderHeight() + 20;
+      const rawTop = getDocumentTop(targetEl) - headerOffset;
       const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       targetY = Math.min(Math.max(0, rawTop), maxScroll);
     }
+
+    manualNavLockRef.current = { id, targetY };
 
     if (prefersReduced) {
       window.scrollTo(0, targetY);
@@ -269,7 +335,7 @@ export default function App() {
       return;
     }
 
-    const duration = Math.min(760, Math.max(460, Math.abs(distance) * 0.55));
+    const duration = Math.min(720, Math.max(420, Math.abs(distance) * 0.52));
     const startTime = performance.now();
     isProgrammaticScrollRef.current = true;
 
@@ -285,8 +351,12 @@ export default function App() {
         rafRef.current = requestAnimationFrame(step);
       } else {
         rafRef.current = null;
-        isProgrammaticScrollRef.current = false;
+        window.scrollTo(0, targetY);
         triggerArrivalHighlight(id);
+        programScrollTimerRef.current = window.setTimeout(() => {
+          isProgrammaticScrollRef.current = false;
+          programScrollTimerRef.current = null;
+        }, 140);
       }
     };
 
@@ -333,7 +403,10 @@ export default function App() {
       <div className="min-h-screen bg-[#F3F6FA] text-[#0F172A] flex flex-col">
         {/* Top Navigation Bar matching mockup */}
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/90">
-          <div className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between gap-4">
+          <div
+            ref={headerBarRef}
+            className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between gap-4"
+          >
             {/* Left Zone: HT Monogram + Name + Title */}
             <a
               href="#top"
@@ -446,7 +519,7 @@ export default function App() {
         <main id="top" className="flex-1">
           {/* HERO BANNER — Deep Navy / Tech Network Canvas */}
           <section className="relative overflow-hidden bg-gradient-to-br from-[#041230] via-[#0A2B66] to-[#08204E] text-white">
-            {/* Architectural SVG Server & Global Network Backdrop with Scroll Parallax */}
+            {/* Architectural SVG Server & Animated Digital Sphere Backdrop */}
             <motion.svg
               aria-hidden="true"
               viewBox="0 0 1440 520"
@@ -455,38 +528,251 @@ export default function App() {
               className="absolute inset-0 w-full h-full pointer-events-none will-change-transform"
             >
               <defs>
-                <radialGradient id="globe-glow" cx="55%" cy="55%" r="38%">
-                  <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.6" />
+                <radialGradient id="globe-glow" cx="52%" cy="54%" r="36%">
+                  <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.65" />
+                  <stop offset="55%" stopColor="#1D4ED8" stopOpacity="0.22" />
                   <stop offset="100%" stopColor="#041230" stopOpacity="0" />
                 </radialGradient>
+                <radialGradient id="sphere-core" cx="42%" cy="38%" r="60%">
+                  <stop offset="0%" stopColor="#7DD3FC" stopOpacity="0.28" />
+                  <stop offset="55%" stopColor="#0EA5E9" stopOpacity="0.1" />
+                  <stop offset="100%" stopColor="#041230" stopOpacity="0.02" />
+                </radialGradient>
               </defs>
-              <rect width="1440" height="520" fill="url(#globe-glow)" />
-              {/* Left & Right Server Rack Silhouettes */}
-              <g stroke="#38BDF8" strokeOpacity="0.25" fill="#041538" fillOpacity="0.65">
+
+              <motion.rect
+                width="1440"
+                height="520"
+                fill="url(#globe-glow)"
+                animate={{ opacity: [0.75, 1, 0.75] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+              />
+
+              {/* Left & Right Server Rack Silhouettes (preserved background) */}
+              <g stroke="#38BDF8" strokeOpacity="0.22" fill="#041538" fillOpacity="0.55">
                 <rect x="20" y="30" width="84" height="460" rx="4" />
                 <rect x="116" y="55" width="70" height="410" rx="4" />
                 <rect x="1250" y="50" width="74" height="420" rx="4" />
                 <rect x="1336" y="25" width="88" height="470" rx="4" />
               </g>
-              {/* Wireframe Digital Globe */}
-              <g transform="translate(650, 290)" stroke="#7DD3FC" fill="none" opacity="0.45">
-                <circle r="190" strokeWidth="1.2" />
-                <ellipse rx="190" ry="68" strokeWidth="1" />
-                <ellipse rx="190" ry="130" strokeWidth="0.9" />
-                <ellipse rx="72" ry="190" strokeWidth="1" />
-                <ellipse rx="138" ry="190" strokeWidth="0.9" />
-                <circle cx="-110" cy="-70" r="3" fill="#38BDF8" />
-                <circle cx="85" cy="-95" r="3.5" fill="#38BDF8" />
-                <circle cx="-40" cy="40" r="3" fill="#BAE6FD" />
-                <circle cx="120" cy="30" r="2.5" fill="#38BDF8" />
+
+              {/* Subtle Rack LED Pulses */}
+              <g>
+                <motion.circle
+                  cx="36"
+                  cy="68"
+                  r="2.2"
+                  fill="#22D3EE"
+                  animate={{ opacity: [0.25, 0.95, 0.25] }}
+                  transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.circle
+                  cx="132"
+                  cy="115"
+                  r="2.2"
+                  fill="#38BDF8"
+                  animate={{ opacity: [0.85, 0.2, 0.85] }}
+                  transition={{ duration: 3.1, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.circle
+                  cx="1268"
+                  cy="96"
+                  r="2.2"
+                  fill="#22D3EE"
+                  animate={{ opacity: [0.3, 0.9, 0.3] }}
+                  transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.circle
+                  cx="1354"
+                  cy="142"
+                  r="2.2"
+                  fill="#34D399"
+                  animate={{ opacity: [0.9, 0.25, 0.9] }}
+                  transition={{ duration: 2.1, repeat: Infinity, ease: 'easeInOut' }}
+                />
               </g>
-              {/* Subtle Circuit Lines */}
+
+              {/* Animated Wireframe Digital Sphere / Globe */}
+              <g transform="translate(690, 275)">
+                {/* Soft Atmospheric Halo */}
+                <motion.circle
+                  cx="0"
+                  cy="0"
+                  r="204"
+                  fill="url(#sphere-core)"
+                  stroke="#38BDF8"
+                  strokeOpacity="0.18"
+                  strokeWidth="1"
+                  style={{ transformOrigin: '0px 0px' }}
+                  animate={{ scale: [0.98, 1.03, 0.98], opacity: [0.65, 0.95, 0.65] }}
+                  transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+                />
+
+                {/* Outer Rotating Dashed Orbit Ring */}
+                <motion.circle
+                  cx="0"
+                  cy="0"
+                  r="214"
+                  fill="none"
+                  stroke="#38BDF8"
+                  strokeOpacity="0.32"
+                  strokeWidth="1.2"
+                  strokeDasharray="6 10"
+                  style={{ transformOrigin: '0px 0px' }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 48, repeat: Infinity, ease: 'linear' }}
+                />
+
+                {/* Tilted Satellite Orbit 1 */}
+                <g transform="rotate(-16)">
+                  <ellipse
+                    rx="246"
+                    ry="66"
+                    fill="none"
+                    stroke="#22D3EE"
+                    strokeOpacity="0.34"
+                    strokeWidth="1.15"
+                    strokeDasharray="5 7"
+                  />
+                  <motion.g
+                    style={{ transformOrigin: '0px 0px' }}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 22, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <circle cx="206" cy="0" r="3.5" fill="#22D3EE" />
+                    <circle cx="206" cy="0" r="8" fill="#22D3EE" fillOpacity="0.22" />
+                  </motion.g>
+                </g>
+
+                {/* Tilted Satellite Orbit 2 */}
+                <g transform="rotate(20)">
+                  <motion.ellipse
+                    rx="236"
+                    ry="54"
+                    fill="none"
+                    stroke="#7DD3FC"
+                    strokeOpacity="0.24"
+                    strokeWidth="1"
+                    strokeDasharray="3 9"
+                    animate={{ strokeDashoffset: [0, -72] }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                  />
+                </g>
+
+                {/* Core Sphere Boundary + Latitude Rings */}
+                <g stroke="#7DD3FC" fill="none" opacity="0.72">
+                  <circle r="184" strokeWidth="1.4" strokeOpacity="0.7" />
+                  <ellipse rx="184" ry="128" strokeWidth="0.95" strokeOpacity="0.45" />
+                  <ellipse rx="184" ry="64" strokeWidth="1.1" strokeOpacity="0.6" />
+                  <line x1="-184" y1="0" x2="184" y2="0" strokeWidth="0.9" strokeOpacity="0.4" />
+                  <line x1="0" y1="-184" x2="0" y2="184" strokeWidth="0.9" strokeOpacity="0.35" />
+
+                  {/* Animated Spinning Longitude Meridians (3D Sphere Rotation Effect) */}
+                  <motion.ellipse
+                    cx="0"
+                    cy="0"
+                    rx="140"
+                    ry="184"
+                    strokeWidth="1"
+                    strokeOpacity="0.55"
+                    style={{ transformOrigin: '0px 0px' }}
+                    animate={{ scaleX: [1, 0.18, 1] }}
+                    transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                  <motion.ellipse
+                    cx="0"
+                    cy="0"
+                    rx="74"
+                    ry="184"
+                    strokeWidth="1.1"
+                    strokeOpacity="0.65"
+                    style={{ transformOrigin: '0px 0px' }}
+                    animate={{ scaleX: [0.35, 1.35, 0.35] }}
+                    transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+                  />
+                  <motion.ellipse
+                    cx="0"
+                    cy="0"
+                    rx="184"
+                    ry="184"
+                    strokeWidth="0.9"
+                    strokeDasharray="4 6"
+                    strokeOpacity="0.45"
+                    style={{ transformOrigin: '0px 0px' }}
+                    animate={{ rotate: -360 }}
+                    transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+                  />
+                </g>
+
+                {/* Network Connection Arcs across the Globe */}
+                <g fill="none" stroke="#22D3EE" strokeWidth="1.1" strokeOpacity="0.5">
+                  <motion.path
+                    d="M -112 -68 Q -12 -128 86 -94"
+                    strokeDasharray="4 4"
+                    animate={{ strokeDashoffset: [0, -32] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                  />
+                  <motion.path
+                    d="M -42 38 Q 42 -15 122 28"
+                    strokeDasharray="4 4"
+                    animate={{ strokeDashoffset: [0, 32] }}
+                    transition={{ duration: 4.8, repeat: Infinity, ease: 'linear' }}
+                  />
+                  <motion.path
+                    d="M -112 -68 Q -85 5 -42 38"
+                    strokeDasharray="3 5"
+                    animate={{ strokeDashoffset: [0, -24] }}
+                    transition={{ duration: 3.6, repeat: Infinity, ease: 'linear' }}
+                  />
+                </g>
+
+                {/* Pulsing Network Nodes on the Sphere */}
+                {[
+                  { cx: -112, cy: -68, delay: 0 },
+                  { cx: 86, cy: -94, delay: 0.7 },
+                  { cx: -42, cy: 38, delay: 1.4 },
+                  { cx: 122, cy: 28, delay: 2.1 },
+                  { cx: 18, cy: -34, delay: 1.0 },
+                ].map((node, idx) => (
+                  <g key={idx} transform={`translate(${node.cx}, ${node.cy})`}>
+                    <motion.circle
+                      cx="0"
+                      cy="0"
+                      r="9"
+                      fill="none"
+                      stroke="#22D3EE"
+                      strokeWidth="1.2"
+                      style={{ transformOrigin: '0px 0px' }}
+                      animate={{ scale: [0.6, 1.9, 0.6], opacity: [0.85, 0, 0.85] }}
+                      transition={{
+                        duration: 3.2,
+                        delay: node.delay,
+                        repeat: Infinity,
+                        ease: 'easeOut',
+                      }}
+                    />
+                    <circle cx="0" cy="0" r="3.4" fill="#E0F2FE" />
+                  </g>
+                ))}
+              </g>
+
+              {/* Subtle Circuit Lines + Animated Signal Pulse */}
               <path
                 d="M0 440 H360 L410 390 H590 M980 120 H1160 L1210 170 H1440"
                 stroke="#38BDF8"
-                strokeOpacity="0.3"
+                strokeOpacity="0.28"
                 strokeWidth="1.2"
                 fill="none"
+              />
+              <motion.path
+                d="M0 440 H360 L410 390 H590 M980 120 H1160 L1210 170 H1440"
+                stroke="#22D3EE"
+                strokeOpacity="0.7"
+                strokeWidth="1.8"
+                strokeDasharray="18 140"
+                fill="none"
+                animate={{ strokeDashoffset: [0, -158] }}
+                transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
               />
             </motion.svg>
 
@@ -644,11 +930,11 @@ export default function App() {
               {/* Column 1: Về tôi | About Me */}
               <motion.section
                 id="about"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 animate={highlightedSection === 'about' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'about'
                     ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
@@ -698,11 +984,11 @@ export default function App() {
               {/* Column 2: Năng lực chuyên môn | Core Skills */}
               <motion.section
                 id="skills"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 animate={highlightedSection === 'skills' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
-                transition={{ duration: 0.4, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.38, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'skills'
                     ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
@@ -766,11 +1052,11 @@ export default function App() {
               {/* Column 3: Dự án tiêu biểu | Featured Projects */}
               <motion.section
                 id="projects"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 animate={highlightedSection === 'projects' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
-                transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.38, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'projects'
                     ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
@@ -864,11 +1150,11 @@ export default function App() {
               {/* Col 1: Kinh nghiệm làm việc | Work Experience */}
               <motion.section
                 id="experience"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 animate={highlightedSection === 'experience' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'experience'
                     ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
@@ -945,11 +1231,11 @@ export default function App() {
               {/* Col 2: Trình độ học vấn | Education */}
               <motion.section
                 id="education"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 animate={highlightedSection === 'education' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
-                transition={{ duration: 0.4, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.38, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'education'
                     ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
@@ -1010,11 +1296,11 @@ export default function App() {
               {/* Col 3: Thông tin liên hệ | Contact + QR */}
               <motion.section
                 id="contact"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 animate={highlightedSection === 'contact' ? { scale: [1, 1.014, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.14 }}
-                transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.38, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
                 className={`lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-all duration-500 ${
                   highlightedSection === 'contact'
                     ? 'ring-2 ring-[#2563EB]/60 bg-blue-50/85 shadow-md shadow-blue-900/10'
