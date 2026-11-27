@@ -4,36 +4,17 @@ import QRCode from 'qrcode';
 import type { ProjectItem } from '../data/profile';
 
 export function HTMonogram({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
-  const textColor = variant === 'light' ? '#1D4ED8' : '#FFFFFF';
-  const arcColor = variant === 'light' ? '#0EA5E9' : '#38BDF8';
-
   return (
-    <svg
-      viewBox="0 0 44 36"
-      className="w-10 h-8 shrink-0"
+    <img
+      src="/assets/aistudio/logohoangthien_clean.png"
+      alt=""
       aria-hidden="true"
-    >
-      <path
-        d="M5 27 C 11 9, 27 5, 39 10"
-        fill="none"
-        stroke={arcColor}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        opacity="0.85"
-      />
-      <text
-        x="4"
-        y="27"
-        fill={textColor}
-        fontFamily="Bricolage Grotesque, Plus Jakarta Sans, sans-serif"
-        fontWeight="800"
-        fontSize="24"
-        fontStyle="italic"
-        letterSpacing="-1.5"
-      >
-        HT
-      </text>
-    </svg>
+      className={`w-12 h-9 sm:w-[52px] sm:h-10 object-contain shrink-0 select-none transition-all duration-300 ${
+        variant === 'light'
+          ? 'drop-shadow-[0_1px_3px_rgba(11,70,155,0.28)]'
+          : 'drop-shadow-[0_0_8px_rgba(56,189,248,0.45)]'
+      }`}
+    />
   );
 }
 
