@@ -1063,136 +1063,244 @@ export default function App() {
 
           {/* MAIN CONTENT CONTAINER */}
           <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-10 py-10 space-y-10">
-            {/* ROW 1: 3-Column Bento Dashboard (About Me | Core Skills | Featured Projects) */}
+            {/* ROW 1: Modern 12-Col Bento Dashboard (Left 7-Col Stack: [About + Core Skills] + [Work Experience] | Right 5-Col: Featured Projects) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Column 1: Về tôi | About Me */}
-              <motion.section
-                id="about"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                animate={highlightedSection === 'about' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
-                className={`group/sec lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
-                  highlightedSection === 'about'
-                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
-                }`}
-              >
-                <div>
-                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                    <span
-                      className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-[height,background-color] duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
-                      aria-hidden="true"
-                    />
-                    <span>{about.headingVi}</span>
-                    <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
-                    <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">{about.headingEn}</span>
-                  </h2>
-                  <SectionArrivalBar active={highlightedSection === 'about'} />
-                </div>
-
-                <p className="text-[13.5px] text-zinc-700 dark:text-slate-300 leading-relaxed">{about.summary}</p>
-
-                <ul className="space-y-2 pt-1">
-                  {about.values.map((val, idx) => (
-                    <motion.li
-                      key={val}
-                      initial={{ opacity: 0, x: -12 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      whileHover={{ x: 4, transition: { duration: 0.18, delay: 0 } }}
-                      viewport={{ once: true, amount: 0.15 }}
-                      transition={{ duration: 0.38, delay: 0.05 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                      className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800 dark:text-slate-200 transition-colors duration-200 hover:text-[#0B469B] dark:hover:text-sky-300"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
-                      <span>{val}</span>
-                    </motion.li>
-                  ))}
-                </ul>
-
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsCvOpen(true)}
-                    className="group cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-sm min-h-[38px]"
+              {/* LEFT 7-COLUMN BENTO STACK */}
+              <div className="lg:col-span-7 space-y-8">
+                {/* Top Tier: Về tôi (3/7) + Năng lực chuyên môn (4/7) */}
+                <div className="grid grid-cols-1 md:grid-cols-7 gap-8 items-start">
+                  {/* Column 1: Về tôi | About Me */}
+                  <motion.section
+                    id="about"
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    animate={highlightedSection === 'about' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
+                    viewport={{ once: true, amount: 0.08 }}
+                    transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                    className={`group/sec md:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
+                      highlightedSection === 'about'
+                        ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
+                        : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
+                    }`}
                   >
-                    <span>{about.moreBtn}</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-                  </button>
-                </div>
-              </motion.section>
+                    <div>
+                      <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                        <span
+                          className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-[height,background-color] duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                          aria-hidden="true"
+                        />
+                        <span>{about.headingVi}</span>
+                        <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                        <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">{about.headingEn}</span>
+                      </h2>
+                      <SectionArrivalBar active={highlightedSection === 'about'} />
+                    </div>
 
-              {/* Column 2: Năng lực chuyên môn | Core Skills */}
-              <motion.section
-                id="skills"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                animate={highlightedSection === 'skills' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.52, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-                className={`group/sec lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
-                  highlightedSection === 'skills'
-                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
-                }`}
-              >
-                <div>
-                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                    <span
-                      className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-[height,background-color] duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
-                      aria-hidden="true"
-                    />
-                    <span>{skillsSection.headingVi}</span>
-                    <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
-                    <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
-                      {skillsSection.headingEn}
-                    </span>
-                  </h2>
-                  <SectionArrivalBar active={highlightedSection === 'skills'} />
-                </div>
+                    <p className="text-[13.5px] text-zinc-700 dark:text-slate-300 leading-relaxed">{about.summary}</p>
 
-                <div className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-3.5 shadow-xs transition-colors duration-300">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                    {competencies.map((comp, idx) => {
-                      const skillTheme = SKILL_THEME_CLASSES[comp.theme];
-                      return (
-                        <motion.button
-                          key={comp.id}
-                          type="button"
-                          onClick={() => setSelectedSkillId(comp.id)}
-                          initial={{ opacity: 0, y: 16, scale: 0.96 }}
-                          whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                          whileHover={{ y: -4, scale: 1.02, transition: { duration: 0.2, delay: 0, ease: [0.16, 1, 0.3, 1] } }}
-                          whileTap={{ scale: 0.97, transition: { duration: 0.12, delay: 0 } }}
-                          viewport={{ once: true, amount: 0.1 }}
-                          transition={{ duration: 0.4, delay: idx * 0.045, ease: [0.22, 1, 0.36, 1] }}
-                          className={`group cursor-pointer relative overflow-hidden text-center rounded-xl border p-3.5 flex flex-col items-center justify-center gap-2 transition-[background-color,border-color,box-shadow] duration-200 hover:shadow-md hover:shadow-blue-950/10 dark:hover:shadow-black/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${skillTheme.card}`}
+                    <ul className="space-y-2 pt-1">
+                      {about.values.map((val, idx) => (
+                        <motion.li
+                          key={val}
+                          initial={{ opacity: 0, x: -12 }}
+                          whileInView={{ opacity: 1, x: 0 }}
+                          whileHover={{ x: 4, transition: { duration: 0.18, delay: 0 } }}
+                          viewport={{ once: true, amount: 0.15 }}
+                          transition={{ duration: 0.38, delay: 0.05 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                          className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800 dark:text-slate-200 transition-colors duration-200 hover:text-[#0B469B] dark:hover:text-sky-300"
                         >
-                          <span
-                            className={`inline-flex items-center justify-center w-9 h-9 rounded-full shadow-xs transition-[transform,box-shadow] duration-300 group-hover:scale-110 group-hover:ring-4 group-hover:ring-white/80 dark:group-hover:ring-slate-900/60 ${skillTheme.iconBg}`}
+                          <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
+                          <span>{val}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
+
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsCvOpen(true)}
+                        className="group cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-sm min-h-[38px]"
+                      >
+                        <span>{about.moreBtn}</span>
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                      </button>
+                    </div>
+                  </motion.section>
+
+                  {/* Column 2: Năng lực chuyên môn | Core Skills */}
+                  <motion.section
+                    id="skills"
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    animate={highlightedSection === 'skills' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
+                    viewport={{ once: true, amount: 0.08 }}
+                    transition={{ duration: 0.52, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+                    className={`group/sec md:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
+                      highlightedSection === 'skills'
+                        ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
+                        : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
+                    }`}
+                  >
+                    <div>
+                      <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                        <span
+                          className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-[height,background-color] duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                          aria-hidden="true"
+                        />
+                        <span>{skillsSection.headingVi}</span>
+                        <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                        <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
+                          {skillsSection.headingEn}
+                        </span>
+                      </h2>
+                      <SectionArrivalBar active={highlightedSection === 'skills'} />
+                    </div>
+
+                    <div className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-3.5 shadow-xs transition-colors duration-300">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        {competencies.map((comp, idx) => {
+                          const skillTheme = SKILL_THEME_CLASSES[comp.theme];
+                          return (
+                            <motion.button
+                              key={comp.id}
+                              type="button"
+                              onClick={() => setSelectedSkillId(comp.id)}
+                              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                              whileHover={{ y: -4, scale: 1.02, transition: { duration: 0.2, delay: 0, ease: [0.16, 1, 0.3, 1] } }}
+                              whileTap={{ scale: 0.97, transition: { duration: 0.12, delay: 0 } }}
+                              viewport={{ once: true, amount: 0.1 }}
+                              transition={{ duration: 0.4, delay: idx * 0.045, ease: [0.22, 1, 0.36, 1] }}
+                              className={`group cursor-pointer relative overflow-hidden text-center rounded-xl border p-3.5 flex flex-col items-center justify-center gap-2 transition-[background-color,border-color,box-shadow] duration-200 hover:shadow-md hover:shadow-blue-950/10 dark:hover:shadow-black/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${skillTheme.card}`}
+                            >
+                              <span
+                                className={`inline-flex items-center justify-center w-9 h-9 rounded-full shadow-xs transition-[transform,box-shadow] duration-300 group-hover:scale-110 group-hover:ring-4 group-hover:ring-white/80 dark:group-hover:ring-slate-900/60 ${skillTheme.iconBg}`}
+                              >
+                                {renderSkillTileIcon(comp.iconKey)}
+                              </span>
+                              <div className="space-y-0.5">
+                                <div className="text-xs font-bold text-zinc-900 dark:text-slate-100 leading-snug">
+                                  {comp.title}
+                                </div>
+                                <div className="text-[10.5px] text-zinc-600 dark:text-slate-400 leading-tight">
+                                  {comp.shortSubtitle}
+                                </div>
+                              </div>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[11px] text-zinc-500 dark:text-slate-400 text-center pt-2.5">
+                        {skillsSection.clickHint}
+                      </p>
+                    </div>
+                  </motion.section>
+                </div>
+
+                {/* Bottom Tier of Left Bento Stack: Kinh nghiệm làm việc | Work Experience */}
+                <motion.section
+                  id="experience"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  animate={highlightedSection === 'experience' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
+                  viewport={{ once: true, amount: 0.08 }}
+                  transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                  className={`group/sec space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
+                    highlightedSection === 'experience'
+                      ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
+                      : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
+                        <span
+                          className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-[height,background-color] duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
+                          aria-hidden="true"
+                        />
+                        <span>{experienceSection.headingVi}</span>
+                        <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
+                        <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
+                          {experienceSection.headingEn}
+                        </span>
+                      </h2>
+                      <SectionArrivalBar active={highlightedSection === 'experience'} />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsCvOpen(true)}
+                      className="group cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-sm whitespace-nowrap shrink-0"
+                    >
+                      <span>{experienceSection.viewDetails}</span>
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                    </button>
+                  </div>
+
+                  <div className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs transition-colors duration-300">
+                    <div className="space-y-4">
+                      {experiences.map((exp, expIdx) => {
+                        const isLast = expIdx === experiences.length - 1;
+                        return (
+                          <div
+                            key={exp.id}
+                            className={`relative flex flex-col sm:flex-row gap-2.5 sm:gap-5 ${
+                              !isLast ? 'pb-4 border-b border-zinc-100 dark:border-slate-800/80' : ''
+                            }`}
                           >
-                            {renderSkillTileIcon(comp.iconKey)}
-                          </span>
-                          <div className="space-y-0.5">
-                            <div className="text-xs font-bold text-zinc-900 dark:text-slate-100 leading-snug">
-                              {comp.title}
+                            {/* Timeline Period Column */}
+                            <div className="sm:w-[116px] shrink-0 pt-0.5 flex sm:flex-col items-baseline sm:items-start gap-2 sm:gap-1">
+                              <div className="inline-flex items-center gap-2">
+                                <span
+                                  className={`w-2.5 h-2.5 rounded-full border-2 inline-block shrink-0 transition-transform duration-300 group-hover/sec:scale-125 ${
+                                    isLast
+                                      ? 'border-[#1D4ED8] bg-[#1D4ED8] dark:border-sky-400 dark:bg-sky-400 shadow-[0_0_0_3px_rgba(37,99,235,0.14)] dark:shadow-[0_0_0_3px_rgba(56,189,248,0.18)]'
+                                      : 'border-[#1D4ED8] dark:border-sky-400 bg-white dark:bg-[#131C31]'
+                                  }`}
+                                />
+                                <span className="text-xs font-bold text-[#1D4ED8] dark:text-sky-400 font-mono tabular-nums whitespace-nowrap">
+                                  {exp.period}
+                                </span>
+                              </div>
+                              <div className="text-[11px] font-medium text-zinc-500 dark:text-slate-400 sm:pl-4.5">
+                                {exp.duration}
+                              </div>
                             </div>
-                            <div className="text-[10.5px] text-zinc-600 dark:text-slate-400 leading-tight">
-                              {comp.shortSubtitle}
+
+                            {/* Organization & Responsibilities */}
+                            <div className="space-y-1.5 flex-1 min-w-0">
+                              <h3 className="text-[13.5px] sm:text-sm font-bold text-zinc-950 dark:text-slate-100 leading-snug">
+                                {exp.organization}
+                              </h3>
+                              <ul className="space-y-1">
+                                {exp.highlights.map((item, idx) => (
+                                  <motion.li
+                                    key={idx}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    whileHover={{ x: 4, transition: { duration: 0.18, delay: 0 } }}
+                                    viewport={{ once: true, amount: 0.15 }}
+                                    transition={{
+                                      duration: 0.36,
+                                      delay: 0.04 + (expIdx * 3 + idx) * 0.035,
+                                      ease: [0.22, 1, 0.36, 1],
+                                    }}
+                                    className="text-xs text-zinc-700 dark:text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8] dark:before:text-sky-400 transition-colors duration-200 hover:text-zinc-950 dark:hover:text-white"
+                                  >
+                                    {item}
+                                  </motion.li>
+                                ))}
+                              </ul>
                             </div>
                           </div>
-                        </motion.button>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
-                  <p className="text-[11px] text-zinc-500 dark:text-slate-400 text-center pt-2.5">
-                    {skillsSection.clickHint}
-                  </p>
-                </div>
-              </motion.section>
+                </motion.section>
+              </div>
 
-              {/* Column 3: Dự án tiêu biểu | Featured Projects */}
+              {/* RIGHT 5-COLUMN BENTO: Dự án tiêu biểu | Featured Projects */}
               <motion.section
                 id="projects"
                 initial={{ opacity: 0, y: 24 }}
@@ -1292,84 +1400,9 @@ export default function App() {
               </motion.section>
             </div>
 
-            {/* ROW 2: Bottom 3-Column Row (Work Experience | Education | Contact + QR) */}
-            <div className="pt-8 border-t border-zinc-200/90 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-              {/* Col 1: Kinh nghiệm làm việc | Work Experience */}
-              <motion.section
-                id="experience"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                animate={highlightedSection === 'experience' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
-                className={`group/sec lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
-                  highlightedSection === 'experience'
-                    ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
-                    : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
-                }`}
-              >
-                <div>
-                  <h2 className="flex items-baseline gap-2 text-lg font-bold text-zinc-950 dark:text-slate-100">
-                    <span
-                      className="inline-block w-1 h-4 bg-[#1D4ED8] dark:bg-sky-400 rounded-full self-center transition-[height,background-color] duration-300 group-hover/sec:h-5 group-hover/sec:bg-[#2563EB] dark:group-hover/sec:bg-sky-300"
-                      aria-hidden="true"
-                    />
-                    <span>{experienceSection.headingVi}</span>
-                    <span className="text-zinc-300 dark:text-slate-600 font-normal">|</span>
-                    <span className="text-sm font-semibold text-[#1D4ED8] dark:text-sky-400">
-                      {experienceSection.headingEn}
-                    </span>
-                  </h2>
-                  <SectionArrivalBar active={highlightedSection === 'experience'} />
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="shrink-0 pt-0.5 space-y-0.5 min-w-[84px]">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full border-2 border-[#1D4ED8] dark:border-sky-400 bg-white dark:bg-[#0B1120] inline-block transition-transform duration-300 group-hover/sec:scale-125" />
-                      <span className="text-xs font-bold text-[#1D4ED8] dark:text-sky-400 font-mono tabular-nums">
-                        {experiences[0].period}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-zinc-500 dark:text-slate-400 pl-4">
-                      {experiences[0].duration}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2.5 flex-1">
-                    <h3 className="text-sm font-bold text-zinc-950 dark:text-slate-100 leading-snug">
-                      {experiences[0].organization}
-                    </h3>
-                    <ul className="space-y-1.5">
-                      {experiences[0].highlights.map((item, idx) => (
-                        <motion.li
-                          key={idx}
-                          initial={{ opacity: 0, x: -12 }}
-                          whileInView={{ opacity: 1, x: 0 }}
-                          whileHover={{ x: 4, transition: { duration: 0.18, delay: 0 } }}
-                          viewport={{ once: true, amount: 0.15 }}
-                          transition={{ duration: 0.38, delay: 0.05 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                          className="text-xs text-zinc-700 dark:text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8] dark:before:text-sky-400 transition-colors duration-200 hover:text-zinc-950 dark:hover:text-white"
-                        >
-                          {item}
-                        </motion.li>
-                      ))}
-                    </ul>
-                    <div className="pt-1 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setIsCvOpen(true)}
-                        className="group cursor-pointer inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-[#1D4ED8] dark:text-sky-300 bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-slate-800 border border-[#1D4ED8]/40 dark:border-sky-400/35 rounded-full transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-sm"
-                      >
-                        <span>{experienceSection.viewDetails}</span>
-                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.section>
-
-              {/* Col 2: Trình độ học vấn | Education */}
+            {/* ROW 2: Balanced 7 | 5 Bottom Row (Education | Contact + Zalo QR) */}
+            <div className="pt-8 border-t border-zinc-200/90 dark:border-slate-800 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+              {/* Col 1 (7-col aligned): Trình độ học vấn | Education */}
               <motion.section
                 id="education"
                 initial={{ opacity: 0, y: 24 }}
@@ -1377,7 +1410,7 @@ export default function App() {
                 animate={highlightedSection === 'education' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.08 }}
                 transition={{ duration: 0.52, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-                className={`group/sec lg:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
+                className={`group/sec lg:col-span-7 flex flex-col space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'education'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
                     : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
@@ -1398,44 +1431,49 @@ export default function App() {
                   <SectionArrivalBar active={highlightedSection === 'education'} />
                 </div>
 
-                <div className="group/edu flex items-start gap-3.5">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.85, rotate: -6 }}
-                    whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                    viewport={{ once: true, amount: 0.2 }}
-                    transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-                    className="shrink-0"
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center transition-[transform,border-color,box-shadow] duration-300 group-hover/edu:scale-105 group-hover/edu:-rotate-3 group-hover/edu:shadow-md group-hover/edu:border-amber-300 dark:group-hover/edu:border-amber-500/60">
-                      <Award className="w-6 h-6 text-[#D97706] dark:text-amber-400" strokeWidth={1.8} />
+                <div className="flex-1 bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex flex-col justify-between gap-4 transition-colors duration-300">
+                  <div className="group/edu flex items-start gap-4">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.85, rotate: -6 }}
+                      whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                      viewport={{ once: true, amount: 0.2 }}
+                      transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                      className="shrink-0"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/45 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-center transition-[transform,border-color,box-shadow] duration-300 group-hover/edu:scale-105 group-hover/edu:-rotate-3 group-hover/edu:shadow-md group-hover/edu:border-amber-300 dark:group-hover/edu:border-amber-500/60">
+                        <Award className="w-6 h-6 text-[#D97706] dark:text-amber-400" strokeWidth={1.8} />
+                      </div>
+                    </motion.div>
+                    <div className="space-y-1 min-w-0">
+                      <div className="text-sm sm:text-[15px] font-bold text-zinc-950 dark:text-slate-100 leading-snug">
+                        {educationSection.degree}
+                      </div>
+                      <div className="text-xs font-semibold text-[#1D4ED8] dark:text-sky-400 flex items-center gap-1.5">
+                        <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+                        <span>{educationSection.school}</span>
+                      </div>
                     </div>
-                  </motion.div>
-                  <div className="space-y-1.5">
-                    <div className="text-sm font-bold text-zinc-950 dark:text-slate-100 leading-snug">
-                      {educationSection.degree}
-                    </div>
-                    <div className="text-xs font-semibold text-zinc-800 dark:text-slate-200">
-                      {educationSection.school}
-                    </div>
-                    <ul className="space-y-1 pt-1">
-                      {educationSection.details.map((detail, idx) => (
-                        <motion.li
-                          key={detail}
-                          initial={{ opacity: 0, y: 10 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true, amount: 0.15 }}
-                          transition={{ duration: 0.36, delay: 0.08 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                          className="text-xs text-zinc-600 dark:text-slate-400 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-zinc-400 dark:before:text-slate-500"
-                        >
-                          {detail}
-                        </motion.li>
-                      ))}
-                    </ul>
                   </div>
+
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-zinc-100 dark:border-slate-800/80">
+                    {educationSection.details.map((detail, idx) => (
+                      <motion.li
+                        key={detail}
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.15 }}
+                        transition={{ duration: 0.36, delay: 0.08 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                        className="flex items-center gap-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/45 border border-zinc-200/70 dark:border-slate-700/60 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-slate-300 leading-snug"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
+                        <span>{detail}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
                 </div>
               </motion.section>
 
-              {/* Col 3: Thông tin liên hệ | Contact + QR */}
+              {/* Col 2 (5-col aligned): Thông tin liên hệ | Contact + QR */}
               <motion.section
                 id="contact"
                 initial={{ opacity: 0, y: 24 }}
@@ -1443,7 +1481,7 @@ export default function App() {
                 animate={highlightedSection === 'contact' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
                 viewport={{ once: true, amount: 0.08 }}
                 transition={{ duration: 0.52, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-                className={`group/sec lg:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
+                className={`group/sec lg:col-span-5 flex flex-col space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'contact'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
                     : 'hover:bg-white/80 dark:hover:bg-slate-900/55 hover:shadow-md hover:shadow-slate-900/5 dark:hover:shadow-black/25 hover:ring-1 hover:ring-blue-200/80 dark:hover:ring-sky-500/25'
@@ -1464,7 +1502,7 @@ export default function App() {
                   <SectionArrivalBar active={highlightedSection === 'contact'} />
                 </div>
 
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex items-center justify-between gap-4 transition-colors duration-300">
                   <div className="space-y-2.5 text-xs text-zinc-700 dark:text-slate-300 min-w-0">
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
