@@ -160,6 +160,8 @@ export interface LocalizedContent {
     scopeHeading: string;
     footerPrompt: string;
     contactBtn: string;
+    prevProject: string;
+    nextProject: string;
   };
   cvModal: {
     headerTitle: string;
@@ -188,6 +190,10 @@ export interface LocalizedContent {
     submitBtn: string;
     successTitle: string;
     successDesc: string;
+    openMailBtn: string;
+    copyContentBtn: string;
+    copiedContentBtn: string;
+    zaloFallbackBtn: string;
     closeBtn: string;
   };
 }
@@ -308,6 +314,7 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       details: [
         'Chuyên ngành: Công nghệ Thông tin',
         'Bằng Chuyên viên Công nghệ Phần mềm',
+        'Chứng chỉ Tiếng Anh B1',
       ],
     },
     contactSection: {
@@ -344,6 +351,11 @@ export const CONTENT: Record<Language, LocalizedContent> = {
           period: 'Chuyên môn bổ trợ',
           degree: 'Chuyên viên Công nghệ Phần mềm',
           school: 'Phân tích, thiết kế và phát triển phần mềm ứng dụng',
+        },
+        {
+          period: 'Ngoại ngữ',
+          degree: 'Chứng chỉ Tiếng Anh B1',
+          school: 'Khung năng lực ngoại ngữ bậc 3 (CEFR B1)',
         },
       ],
     },
@@ -614,6 +626,8 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       scopeHeading: 'Phạm vi công việc thực hiện',
       footerPrompt: 'Cần trao đổi thêm về kinh nghiệm triển khai hệ thống này?',
       contactBtn: 'Trao đổi trực tiếp',
+      prevProject: 'Dự án trước',
+      nextProject: 'Dự án tiếp theo',
     },
     cvModal: {
       headerTitle: 'Hồ sơ năng lực (Curriculum Vitae)',
@@ -639,9 +653,14 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       messagePlaceholder: 'Nhập thông tin lịch hẹn phỏng vấn hoặc nội dung cần trao đổi...',
       requiredError: 'Vui lòng nhập đầy đủ họ tên, email và nội dung.',
       emailError: 'Địa chỉ email chưa hợp lệ.',
-      submitBtn: 'Gửi thông tin',
-      successTitle: 'Đã ghi nhận lời nhắn!',
-      successDesc: 'Cảm ơn bạn đã liên hệ. Tôi sẽ phản hồi qua email hoặc điện thoại trong thời gian sớm nhất.',
+      submitBtn: 'Soạn Email gửi ngay',
+      successTitle: 'Đã chuẩn bị nội dung gửi!',
+      successDesc:
+        'Trình duyệt đã mở ứng dụng Email với đầy đủ thông tin của bạn. Nếu ứng dụng chưa tự mở, bạn có thể bấm nút bên dưới để mở lại hoặc sao chép nội dung gửi qua Zalo.',
+      openMailBtn: 'Mở ứng dụng Email',
+      copyContentBtn: 'Sao chép nội dung',
+      copiedContentBtn: 'Đã sao chép nội dung',
+      zaloFallbackBtn: 'Nhắn qua Zalo',
       closeBtn: 'Đóng cửa sổ',
     },
   },
@@ -752,6 +771,7 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       details: [
         'Major: Information Technology',
         'Software Engineering Specialist Certificate',
+        'English Certificate B1',
       ],
     },
     contactSection: {
@@ -788,6 +808,11 @@ export const CONTENT: Record<Language, LocalizedContent> = {
           period: 'Specialization',
           degree: 'Software Engineering Specialist',
           school: 'Enterprise application analysis, architecture, and development',
+        },
+        {
+          period: 'Language',
+          degree: 'English Certificate B1',
+          school: 'CEFR B1 Proficiency Framework',
         },
       ],
     },
@@ -1058,6 +1083,8 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       scopeHeading: 'Scope of Execution',
       footerPrompt: 'Would you like to discuss the architecture behind this system?',
       contactBtn: 'Discuss Directly',
+      prevProject: 'Previous project',
+      nextProject: 'Next project',
     },
     cvModal: {
       headerTitle: 'Curriculum Vitae',
@@ -1083,9 +1110,14 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       messagePlaceholder: 'Share interview schedule or consultation details...',
       requiredError: 'Please enter your name, email, and message.',
       emailError: 'Please enter a valid email address.',
-      submitBtn: 'Send Message',
-      successTitle: 'Message Recorded!',
-      successDesc: 'Thank you for reaching out. I will respond via email or phone as soon as possible.',
+      submitBtn: 'Compose & Send Email',
+      successTitle: 'Message Ready to Send!',
+      successDesc:
+        'Your email client has been triggered with your message pre-filled. If it did not open automatically, use the buttons below to reopen or copy the message for Zalo.',
+      openMailBtn: 'Open Email App',
+      copyContentBtn: 'Copy Message',
+      copiedContentBtn: 'Copied!',
+      zaloFallbackBtn: 'Chat on Zalo',
       closeBtn: 'Close',
     },
   },

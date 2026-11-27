@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { X, Printer, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { LocalizedContent } from '../data/profile';
+import { useModalDialog } from '../hooks/useModalDialog';
 
 interface CvModalProps {
   isOpen: boolean;
@@ -12,21 +13,8 @@ interface CvModalProps {
 
 export function CvModal({ isOpen, content, onClose, onOpenPdf }: CvModalProps) {
   const { profile, experiences, projects, techStackTable, cvModal: copy } = content;
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useModalDialog(isOpen, onClose, dialogRef);
 
   const handlePrint = () => {
     window.print();
@@ -47,11 +35,13 @@ export function CvModal({ isOpen, content, onClose, onOpenPdf }: CvModalProps) {
           aria-labelledby="cv-modal-title"
         >
           <motion.div
+            ref={dialogRef}
+            tabIndex={-1}
             initial={{ opacity: 0, y: 12, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.985 }}
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0F172A] border border-zinc-200 dark:border-slate-800 rounded-2xl shadow-2xl"
+            className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0F172A] border border-zinc-200 dark:border-slate-800 rounded-2xl shadow-2xl focus:outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-4 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-xs border-b border-zinc-200/80 dark:border-slate-800">

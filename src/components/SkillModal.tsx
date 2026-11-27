@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useRef } from 'react';
 import { X, Server, Database, ShieldCheck, Code2, MapPin, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { CompetencyCard, Language } from '../data/profile';
+import { useModalDialog } from '../hooks/useModalDialog';
 
 interface SkillModalProps {
   skill: CompetencyCard | null;
@@ -27,18 +28,8 @@ function SkillIcon({ iconKey }: { iconKey: CompetencyCard['iconKey'] }) {
 }
 
 export function SkillModal({ skill, lang, onClose }: SkillModalProps) {
-  useEffect(() => {
-    if (!skill) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [skill, onClose]);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  useModalDialog(Boolean(skill), onClose, dialogRef);
 
   return (
     <AnimatePresence>
@@ -55,11 +46,13 @@ export function SkillModal({ skill, lang, onClose }: SkillModalProps) {
           aria-labelledby="skill-modal-title"
         >
           <motion.div
+            ref={dialogRef}
+            tabIndex={-1}
             initial={{ opacity: 0, y: 10, scale: 0.985 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.985 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className={`w-full bg-white dark:bg-[#0F172A] border border-zinc-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[88vh] flex flex-col ${
+            className={`w-full bg-white dark:bg-[#0F172A] border border-zinc-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-h-[88vh] flex flex-col focus:outline-none ${
               skill.pillars ? 'max-w-2xl' : 'max-w-lg'
             }`}
             onClick={(e) => e.stopPropagation()}

@@ -19,14 +19,14 @@ import {
   Copy,
   Database,
   Download,
+  FileText,
   FolderKanban,
-  Github,
   GraduationCap,
   Home,
-  Linkedin,
   Mail,
   MapPin,
   Menu,
+  MessageCircle,
   Moon,
   Phone,
   Send,
@@ -130,7 +130,11 @@ function SectionArrivalBar({ active }: { active: boolean }) {
 }
 
 export default function App() {
-  const [lang, setLang] = useState<Language>('vi');
+  const [lang, setLang] = useState<Language>(() => {
+    if (typeof window === 'undefined') return 'vi';
+    const saved = window.localStorage.getItem('portfolio-lang');
+    return saved === 'en' || saved === 'vi' ? saved : 'vi';
+  });
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window === 'undefined') return 'light';
     const saved = window.localStorage.getItem('portfolio-theme');
@@ -139,6 +143,7 @@ export default function App() {
   const [activeNav, setActiveNav] = useState<string>('top');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [nearFooter, setNearFooter] = useState(false);
 
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
@@ -148,16 +153,22 @@ export default function App() {
   const [contactSubject, setContactSubject] = useState('');
   const [copiedField, setCopiedField] = useState<'email' | 'phone' | null>(null);
   const [highlightedSection, setHighlightedSection] = useState<string | null>(null);
+  const [isDesktop, setIsDesktop] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.matchMedia('(min-width: 1024px)').matches : true
+  );
 
   const rafRef = useRef<number | null>(null);
   const spyRafRef = useRef<number | null>(null);
   const scrollCleanupRef = useRef<(() => void) | null>(null);
   const highlightTimeoutRef = useRef<number | null>(null);
   const programScrollTimerRef = useRef<number | null>(null);
+  const copyTimerRef = useRef<number | null>(null);
   const isProgrammaticScrollRef = useRef(false);
   const showScrollTopRef = useRef(false);
+  const nearFooterRef = useRef(false);
   const activeNavRef = useRef<string>('top');
   const manualNavLockRef = useRef<{ id: string; targetY: number } | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
   const headerBarRef = useRef<HTMLDivElement | null>(null);
 
   const updateActiveNav = (id: string) => {
@@ -214,9 +225,48 @@ export default function App() {
   } = content;
 
   useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const syncDesktop = () => setIsDesktop(mq.matches);
+    syncDesktop();
+    mq.addEventListener('change', syncDesktop);
+    return () => mq.removeEventListener('change', syncDesktop);
+  }, []);
+
+  const sectionViewport = isDesktop
+    ? ({ once: true, amount: 0.16, margin: '0px 0px -64px 0px' } as const)
+    : ({ once: true, amount: 0.08 } as const);
+
+  const cardViewport = isDesktop
+    ? ({ once: true, amount: 0.18, margin: '0px 0px -56px 0px' } as const)
+    : ({ once: true, amount: 0.1 } as const);
+
+  const bottomViewport = isDesktop
+    ? ({ once: true, amount: 0.14, margin: '0px 0px -24px 0px' } as const)
+    : ({ once: true, amount: 0.08 } as const);
+
+  useEffect(() => {
     document.title = content.pageTitle;
     document.documentElement.lang = lang;
+    window.localStorage.setItem('portfolio-lang', lang);
   }, [content.pageTitle, lang]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    const handlePointerDown = (e: PointerEvent) => {
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      window.removeEventListener('keydown', handleKey);
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     const isDark = theme === 'dark';
@@ -237,6 +287,13 @@ export default function App() {
         setShowScrollTop(nextShowTop);
       }
 
+      const nextNearFooter =
+        window.innerHeight + scrollTop >= document.documentElement.scrollHeight - 108;
+      if (nearFooterRef.current !== nextNearFooter) {
+        nearFooterRef.current = nextNearFooter;
+        setNearFooter(nextNearFooter);
+      }
+
       if (isProgrammaticScrollRef.current) return;
 
       if (manualNavLockRef.current) {
@@ -254,50 +311,63 @@ export default function App() {
       }
 
       const headerHeight = getHeaderHeight();
-      const measured: { id: string; top: number }[] = [];
+      const measured: { id: string; top: number; bottom: number; height: number }[] = [];
       for (const id of sectionOrder) {
         const el = document.getElementById(id);
         if (el) {
-          measured.push({ id, top: el.getBoundingClientRect().top });
+          const rect = el.getBoundingClientRect();
+          measured.push({ id, top: rect.top, bottom: rect.bottom, height: rect.height });
         }
       }
 
       if (measured.length === 0) return;
 
-      // Group side-by-side Bento columns into visual rows based on vertical alignment
-      const rows: { top: number; ids: string[] }[] = [];
-      for (const item of measured) {
-        const lastRow = rows[rows.length - 1];
-        if (lastRow && Math.abs(item.top - lastRow.top) < 40) {
-          lastRow.ids.push(item.id);
-        } else {
-          rows.push({ top: item.top, ids: [item.id] });
-        }
-      }
-
       const nearBottom =
         window.innerHeight + scrollTop >= document.documentElement.scrollHeight - 24;
       if (nearBottom) {
-        const lastRow = rows[rows.length - 1];
-        if (lastRow.ids.includes(activeNavRef.current)) {
-          return;
+        const contactItem = measured.find((m) => m.id === 'contact') ?? measured[measured.length - 1];
+        if (activeNavRef.current !== contactItem.id) {
+          updateActiveNav(contactItem.id);
         }
-        updateActiveNav(lastRow.ids[lastRow.ids.length - 1]);
         return;
       }
 
-      const anchorY = headerHeight + 84;
-      let activeRow = rows[0];
-      for (const row of rows) {
-        if (row.top <= anchorY) {
-          activeRow = row;
-        }
-      }
+      const anchorY = headerHeight + 88;
+      const desktopView = window.matchMedia('(min-width: 1024px)').matches;
 
-      if (activeRow.ids.includes(activeNavRef.current)) {
+      if (desktopView) {
+        // Group side-by-side sections while letting Projects activate naturally in the mid-portion of Row 1
+        const edu = measured.find((m) => m.id === 'education');
+        const exp = measured.find((m) => m.id === 'experience');
+        const proj = measured.find((m) => m.id === 'projects');
+        const aboutEl = measured.find((m) => m.id === 'about');
+
+        let nextId = 'about';
+        if (edu && edu.top <= anchorY + 40) {
+          nextId = 'education';
+        } else if (exp && exp.top <= anchorY + 30) {
+          nextId = 'experience';
+        } else if (aboutEl && proj && aboutEl.bottom < anchorY + 120) {
+          nextId = 'projects';
+        } else if (aboutEl && aboutEl.top <= anchorY + 60) {
+          nextId = 'about';
+        }
+
+        if (activeNavRef.current !== nextId) {
+          updateActiveNav(nextId);
+        }
         return;
       }
-      updateActiveNav(activeRow.ids[0]);
+
+      let activeId = measured[0].id;
+      for (const item of measured) {
+        if (item.top <= anchorY) {
+          activeId = item.id;
+        }
+      }
+      if (activeNavRef.current !== activeId) {
+        updateActiveNav(activeId);
+      }
     };
 
     const handleScrollSpy = () => {
@@ -314,6 +384,7 @@ export default function App() {
       if (scrollCleanupRef.current) scrollCleanupRef.current();
       if (highlightTimeoutRef.current) window.clearTimeout(highlightTimeoutRef.current);
       if (programScrollTimerRef.current) window.clearTimeout(programScrollTimerRef.current);
+      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
     };
   }, []);
 
@@ -449,12 +520,62 @@ export default function App() {
     selectedSkillId ? competencies.find((c) => c.id === selectedSkillId) ?? null : null;
 
   const handleCopy = async (value: string, field: 'email' | 'phone') => {
+    let copied = false;
     try {
-      await navigator.clipboard.writeText(value);
-      setCopiedField(field);
-      window.setTimeout(() => setCopiedField(null), 2200);
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(value);
+        copied = true;
+      }
     } catch {
-      setCopiedField(null);
+      copied = false;
+    }
+
+    if (!copied) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(textarea);
+      } catch {
+        copied = false;
+      }
+    }
+
+    if (copied) {
+      if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
+      setCopiedField(field);
+      copyTimerRef.current = window.setTimeout(() => {
+        setCopiedField(null);
+        copyTimerRef.current = null;
+      }, 2200);
+    }
+  };
+
+  const handleHighlightClick = (id: string) => {
+    switch (id) {
+      case 'h-exp':
+        scrollToSection('experience');
+        break;
+      case 'h-edu':
+        scrollToSection('education');
+        break;
+      case 'h-oracle':
+        setSelectedSkillId('comp-db');
+        break;
+      case 'h-win':
+        setSelectedSkillId('comp-infra');
+        break;
+      case 'h-gis':
+        setSelectedSkillId('comp-gis');
+        break;
+      case 'h-sec':
+        setSelectedSkillId('comp-sec');
+        break;
     }
   };
 
@@ -480,10 +601,13 @@ export default function App() {
     <MotionConfig reducedMotion="user">
       <div className="min-h-screen bg-[#F3F6FA] dark:bg-[#0B1120] text-[#0F172A] dark:text-slate-100 flex flex-col transition-colors duration-300">
         {/* Top Navigation Bar */}
-        <header className="sticky top-0 z-40 bg-white/[0.97] dark:bg-[#0F172A]/[0.97] border-b border-zinc-200/90 dark:border-slate-800/90 transition-colors duration-300">
+        <header
+          ref={headerRef}
+          className="sticky top-0 z-40 bg-white/[0.97] dark:bg-[#0F172A]/[0.97] border-b border-zinc-200/90 dark:border-slate-800/90 transition-colors duration-300"
+        >
           <div
             ref={headerBarRef}
-            className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between gap-4"
+            className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 h-[72px] flex items-center justify-between gap-3 xl:gap-4"
           >
             {/* Left Zone: HT Monogram + Name + Title */}
             <a
@@ -502,10 +626,10 @@ export default function App() {
               </div>
             </a>
 
-            {/* Center Zone: Desktop Navigation Items (single active language) */}
+            {/* Center Zone: Desktop Navigation Items (visible from lg 1024px+) */}
             <nav
               aria-label={lang === 'vi' ? 'Điều hướng chính' : 'Primary navigation'}
-              className="hidden xl:flex items-center gap-1.5"
+              className="hidden lg:flex items-center gap-0.5 xl:gap-1.5"
             >
               {navItems.map(({ id, href, label, Icon }) => {
                 const isActive = activeNav === id;
@@ -514,7 +638,7 @@ export default function App() {
                     key={id}
                     href={href}
                     onClick={(e) => scrollToSection(id, e)}
-                    className={`relative inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-left transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${
+                    className={`relative inline-flex items-center gap-1.5 xl:gap-2 px-2.5 xl:px-3.5 py-2.5 rounded-xl text-left transition-colors whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${
                       isActive
                         ? 'text-white'
                         : 'text-zinc-700 dark:text-slate-300 hover:bg-zinc-100 dark:hover:bg-slate-800/80 hover:text-zinc-950 dark:hover:text-white'
@@ -533,7 +657,7 @@ export default function App() {
                       }`}
                       strokeWidth={2}
                     />
-                    <span className="text-[13px] font-semibold leading-none">{label}</span>
+                    <span className="text-[12.5px] xl:text-[13px] font-semibold leading-none">{label}</span>
                   </a>
                 );
               })}
@@ -547,7 +671,7 @@ export default function App() {
                 aria-label={themeToggleLabel}
                 aria-pressed={theme === 'dark'}
                 title={themeToggleLabel}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-100 hover:bg-zinc-200/80 dark:bg-slate-800/90 dark:hover:bg-slate-700/90 border border-zinc-200/80 dark:border-slate-700/80 text-slate-700 dark:text-amber-300 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
+                className="cursor-pointer inline-flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-100 hover:bg-zinc-200/80 dark:bg-slate-800/90 dark:hover:bg-slate-700/90 border border-zinc-200/80 dark:border-slate-700/80 text-slate-700 dark:text-amber-300 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB]"
               >
                 <AnimatePresence mode="wait" initial={false}>
                   {theme === 'dark' ? (
@@ -591,36 +715,44 @@ export default function App() {
                       ? 'Mở menu'
                       : 'Open menu'
                 }
-                className="xl:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg text-zinc-700 dark:text-slate-200 hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors"
+                className="lg:hidden cursor-pointer inline-flex items-center justify-center w-10 h-10 rounded-lg text-zinc-700 dark:text-slate-200 hover:bg-zinc-100 dark:hover:bg-slate-800 transition-colors"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          {/* Mobile / Tablet Nav Drawer */}
-          {mobileMenuOpen && (
-            <div className="xl:hidden border-t border-zinc-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] px-5 py-3 grid grid-cols-2 sm:grid-cols-4 gap-2 transition-colors">
-              {navItems.map(({ id, href, label, Icon }) => {
-                const isActive = activeNav === id;
-                return (
-                  <a
-                    key={id}
-                    href={href}
-                    onClick={(e) => scrollToSection(id, e)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold min-h-[44px] transition-colors ${
-                      isActive
-                        ? 'bg-[#0B469B] dark:bg-sky-600 text-white'
-                        : 'text-zinc-700 dark:text-slate-200 bg-zinc-50 dark:bg-slate-800/80 hover:bg-zinc-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className="truncate">{label}</span>
-                  </a>
-                );
-              })}
-            </div>
-          )}
+          {/* Mobile / Tablet Nav Drawer with Smooth Animation */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                className="lg:hidden border-t border-zinc-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] px-5 py-3 grid grid-cols-2 sm:grid-cols-4 gap-2 transition-colors shadow-lg"
+              >
+                {navItems.map(({ id, href, label, Icon }) => {
+                  const isActive = activeNav === id;
+                  return (
+                    <a
+                      key={id}
+                      href={href}
+                      onClick={(e) => scrollToSection(id, e)}
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-xs font-semibold min-h-[44px] transition-colors ${
+                        isActive
+                          ? 'bg-[#0B469B] dark:bg-sky-600 text-white'
+                          : 'text-zinc-700 dark:text-slate-200 bg-zinc-50 dark:bg-slate-800/80 hover:bg-zinc-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="truncate">{label}</span>
+                    </a>
+                  );
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Reading Scroll Progress Indicator */}
           <motion.div
@@ -974,6 +1106,7 @@ export default function App() {
                         fallbackTitle={profile.fullName}
                         imgClassName="object-top"
                         className="w-full aspect-[7/10] rounded-xl"
+                        priority
                       />
                       <span
                         aria-hidden="true"
@@ -1033,8 +1166,10 @@ export default function App() {
               className="bg-white dark:bg-[#131C31] rounded-2xl overflow-hidden shadow-lg shadow-slate-900/5 dark:shadow-black/35 border border-zinc-200/80 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 lg:divide-x divide-zinc-200/80 dark:divide-slate-800 transition-colors duration-300"
             >
               {highlights.map((item, idx) => (
-                <motion.div
+                <motion.button
                   key={item.id}
+                  type="button"
+                  onClick={() => handleHighlightClick(item.id)}
                   initial={{ opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.15 }}
@@ -1043,7 +1178,7 @@ export default function App() {
                     delay: idx * 0.045,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="group px-4 py-4 flex items-center gap-3 justify-start lg:justify-center transition-colors duration-300 hover:bg-blue-50/65 dark:hover:bg-slate-800/65"
+                  className="group cursor-pointer text-left px-4 py-4 flex items-center gap-3 justify-start lg:justify-center transition-colors duration-300 hover:bg-blue-50/75 dark:hover:bg-slate-800/75 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#1D4ED8]"
                 >
                   <span className="inline-flex shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-rotate-3">
                     <HighlightIcon type={item.iconType} />
@@ -1056,7 +1191,7 @@ export default function App() {
                       {item.subtitle}
                     </div>
                   </div>
-                </motion.div>
+                </motion.button>
               ))}
             </motion.div>
           </motion.section>
@@ -1072,11 +1207,11 @@ export default function App() {
                   {/* Column 1: Về tôi | About Me */}
                   <motion.section
                     id="about"
-                    initial={{ opacity: 0, y: 24 }}
+                    initial={{ opacity: 0, y: isDesktop ? 32 : 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     animate={highlightedSection === 'about' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                    viewport={{ once: true, amount: 0.08 }}
-                    transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                    viewport={sectionViewport}
+                    transition={{ duration: isDesktop ? 0.6 : 0.52, ease: [0.22, 1, 0.36, 1] }}
                     className={`group/sec md:col-span-3 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                       highlightedSection === 'about'
                         ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1102,11 +1237,15 @@ export default function App() {
                       {about.values.map((val, idx) => (
                         <motion.li
                           key={val}
-                          initial={{ opacity: 0, x: -12 }}
+                          initial={{ opacity: 0, x: isDesktop ? -16 : -12 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           whileHover={{ x: 4, transition: { duration: 0.18, delay: 0 } }}
-                          viewport={{ once: true, amount: 0.15 }}
-                          transition={{ duration: 0.38, delay: 0.05 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                          viewport={cardViewport}
+                          transition={{
+                            duration: isDesktop ? 0.44 : 0.38,
+                            delay: (isDesktop ? 0.08 : 0.05) + idx * (isDesktop ? 0.065 : 0.05),
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
                           className="flex items-center gap-2.5 text-[13px] font-medium text-zinc-800 dark:text-slate-200 transition-colors duration-200 hover:text-[#0B469B] dark:hover:text-sky-300"
                         >
                           <CheckCircle2 className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
@@ -1130,11 +1269,15 @@ export default function App() {
                   {/* Column 2: Năng lực chuyên môn | Core Skills */}
                   <motion.section
                     id="skills"
-                    initial={{ opacity: 0, y: 24 }}
+                    initial={{ opacity: 0, y: isDesktop ? 32 : 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     animate={highlightedSection === 'skills' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                    viewport={{ once: true, amount: 0.08 }}
-                    transition={{ duration: 0.52, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+                    viewport={sectionViewport}
+                    transition={{
+                      duration: isDesktop ? 0.6 : 0.52,
+                      delay: isDesktop ? 0.08 : 0.05,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
                     className={`group/sec md:col-span-4 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                       highlightedSection === 'skills'
                         ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1156,7 +1299,13 @@ export default function App() {
                       <SectionArrivalBar active={highlightedSection === 'skills'} />
                     </div>
 
-                    <div className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-3.5 shadow-xs transition-colors duration-300">
+                    <motion.div
+                      initial={{ opacity: 0, y: isDesktop ? 16 : 0, scale: isDesktop ? 0.975 : 1 }}
+                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                      viewport={cardViewport}
+                      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                      className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-3.5 shadow-xs transition-colors duration-300"
+                    >
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                         {competencies.map((comp, idx) => {
                           const skillTheme = SKILL_THEME_CLASSES[comp.theme];
@@ -1165,12 +1314,16 @@ export default function App() {
                               key={comp.id}
                               type="button"
                               onClick={() => setSelectedSkillId(comp.id)}
-                              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                              initial={{ opacity: 0, y: isDesktop ? 22 : 16, scale: isDesktop ? 0.94 : 0.96 }}
                               whileInView={{ opacity: 1, y: 0, scale: 1 }}
                               whileHover={{ y: -4, scale: 1.02, transition: { duration: 0.2, delay: 0, ease: [0.16, 1, 0.3, 1] } }}
                               whileTap={{ scale: 0.97, transition: { duration: 0.12, delay: 0 } }}
-                              viewport={{ once: true, amount: 0.1 }}
-                              transition={{ duration: 0.4, delay: idx * 0.045, ease: [0.22, 1, 0.36, 1] }}
+                              viewport={cardViewport}
+                              transition={{
+                                duration: isDesktop ? 0.48 : 0.4,
+                                delay: idx * (isDesktop ? 0.065 : 0.045),
+                                ease: [0.22, 1, 0.36, 1],
+                              }}
                               className={`group cursor-pointer relative overflow-hidden text-center rounded-xl border p-3.5 flex flex-col items-center justify-center gap-2 transition-[background-color,border-color,box-shadow] duration-200 hover:shadow-md hover:shadow-blue-950/10 dark:hover:shadow-black/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8] ${skillTheme.card}`}
                             >
                               <span
@@ -1193,18 +1346,18 @@ export default function App() {
                       <p className="text-[11px] text-zinc-500 dark:text-slate-400 text-center pt-2.5">
                         {skillsSection.clickHint}
                       </p>
-                    </div>
+                    </motion.div>
                   </motion.section>
                 </div>
 
                 {/* Bottom Tier of Left Bento Stack: Kinh nghiệm làm việc | Work Experience */}
                 <motion.section
                   id="experience"
-                  initial={{ opacity: 0, y: 24 }}
+                  initial={{ opacity: 0, y: isDesktop ? 34 : 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   animate={highlightedSection === 'experience' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                  viewport={{ once: true, amount: 0.08 }}
-                  transition={{ duration: 0.52, ease: [0.22, 1, 0.36, 1] }}
+                  viewport={sectionViewport}
+                  transition={{ duration: isDesktop ? 0.62 : 0.52, ease: [0.22, 1, 0.36, 1] }}
                   className={`group/sec space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                     highlightedSection === 'experience'
                       ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1237,13 +1390,27 @@ export default function App() {
                     </button>
                   </div>
 
-                  <div className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs transition-colors duration-300">
+                  <motion.div
+                    initial={{ opacity: 0, y: isDesktop ? 16 : 0, scale: isDesktop ? 0.975 : 1 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    viewport={cardViewport}
+                    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    className="bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs transition-colors duration-300"
+                  >
                     <div className="space-y-4">
                       {experiences.map((exp, expIdx) => {
                         const isLast = expIdx === experiences.length - 1;
                         return (
-                          <div
+                          <motion.div
                             key={exp.id}
+                            initial={{ opacity: 0, y: isDesktop ? 20 : 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={cardViewport}
+                            transition={{
+                              duration: isDesktop ? 0.5 : 0.36,
+                              delay: isDesktop ? expIdx * 0.1 : 0,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
                             className={`relative flex flex-col sm:flex-row gap-2.5 sm:gap-5 ${
                               !isLast ? 'pb-4 border-b border-zinc-100 dark:border-slate-800/80' : ''
                             }`}
@@ -1279,10 +1446,10 @@ export default function App() {
                                     initial={{ opacity: 0, x: -10 }}
                                     whileInView={{ opacity: 1, x: 0 }}
                                     whileHover={{ x: 4, transition: { duration: 0.18, delay: 0 } }}
-                                    viewport={{ once: true, amount: 0.15 }}
+                                    viewport={cardViewport}
                                     transition={{
-                                      duration: 0.36,
-                                      delay: 0.04 + (expIdx * 3 + idx) * 0.035,
+                                      duration: 0.38,
+                                      delay: 0.05 + idx * (isDesktop ? 0.06 : 0.035),
                                       ease: [0.22, 1, 0.36, 1],
                                     }}
                                     className="text-xs text-zinc-700 dark:text-slate-300 leading-relaxed pl-3 relative before:content-['•'] before:absolute before:left-0 before:text-[#1D4ED8] dark:before:text-sky-400 transition-colors duration-200 hover:text-zinc-950 dark:hover:text-white"
@@ -1292,22 +1459,26 @@ export default function App() {
                                 ))}
                               </ul>
                             </div>
-                          </div>
+                          </motion.div>
                         );
                       })}
                     </div>
-                  </div>
+                  </motion.div>
                 </motion.section>
               </div>
 
               {/* RIGHT 5-COLUMN BENTO: Dự án tiêu biểu | Featured Projects */}
               <motion.section
                 id="projects"
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: isDesktop ? 32 : 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'projects' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.52, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                viewport={sectionViewport}
+                transition={{
+                  duration: isDesktop ? 0.6 : 0.52,
+                  delay: isDesktop ? 0.12 : 0.08,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
                 className={`group/sec lg:col-span-5 space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'projects'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1347,11 +1518,15 @@ export default function App() {
                     return (
                       <motion.article
                         key={proj.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0, y: isDesktop ? 28 : 20, scale: isDesktop ? 0.96 : 1 }}
+                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
                         whileHover={{ y: -4, transition: { duration: 0.2, delay: 0, ease: [0.16, 1, 0.3, 1] } }}
-                        viewport={{ once: true, amount: 0.1 }}
-                        transition={{ duration: 0.44, delay: idx * 0.065, ease: [0.22, 1, 0.36, 1] }}
+                        viewport={cardViewport}
+                        transition={{
+                          duration: isDesktop ? 0.56 : 0.44,
+                          delay: isDesktop ? (idx % 2) * 0.09 : idx * 0.065,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
                         className={`group/card bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 overflow-hidden shadow-xs flex flex-col justify-between transition-[border-color,box-shadow] duration-300 hover:border-[#1D4ED8]/45 dark:hover:border-sky-400/50 hover:shadow-xl hover:shadow-blue-950/10 dark:hover:shadow-black/45 ${
                           isWideCard ? 'sm:col-span-2' : ''
                         }`}
@@ -1405,11 +1580,15 @@ export default function App() {
               {/* Col 1 (7-col aligned): Trình độ học vấn | Education */}
               <motion.section
                 id="education"
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: isDesktop ? 32 : 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'education' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.52, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+                viewport={bottomViewport}
+                transition={{
+                  duration: isDesktop ? 0.58 : 0.52,
+                  delay: 0.05,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
                 className={`group/sec lg:col-span-7 flex flex-col space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'education'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1431,12 +1610,18 @@ export default function App() {
                   <SectionArrivalBar active={highlightedSection === 'education'} />
                 </div>
 
-                <div className="flex-1 bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex flex-col justify-between gap-4 transition-colors duration-300">
+                <motion.div
+                  initial={{ opacity: 0, y: isDesktop ? 16 : 0, scale: isDesktop ? 0.975 : 1 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={bottomViewport}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex-1 bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex flex-col justify-between gap-4 transition-colors duration-300"
+                >
                   <div className="group/edu flex items-start gap-4">
                     <motion.div
                       initial={{ opacity: 0, scale: 0.85, rotate: -6 }}
                       whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                      viewport={{ once: true, amount: 0.2 }}
+                      viewport={bottomViewport}
                       transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
                       className="shrink-0"
                     >
@@ -1456,31 +1641,46 @@ export default function App() {
                   </div>
 
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-3 border-t border-zinc-100 dark:border-slate-800/80">
-                    {educationSection.details.map((detail, idx) => (
-                      <motion.li
-                        key={detail}
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.15 }}
-                        transition={{ duration: 0.36, delay: 0.08 + idx * 0.05, ease: [0.22, 1, 0.36, 1] }}
-                        className="flex items-center gap-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/45 border border-zinc-200/70 dark:border-slate-700/60 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-slate-300 leading-snug"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
-                        <span>{detail}</span>
-                      </motion.li>
-                    ))}
+                    {educationSection.details.map((detail, idx) => {
+                      const spanFullRow =
+                        educationSection.details.length % 2 === 1 &&
+                        idx === educationSection.details.length - 1;
+                      return (
+                        <motion.li
+                          key={detail}
+                          initial={{ opacity: 0, y: isDesktop ? 14 : 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={bottomViewport}
+                          transition={{
+                            duration: 0.38,
+                            delay: 0.08 + idx * (isDesktop ? 0.07 : 0.05),
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                          className={`flex items-center gap-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/45 border border-zinc-200/70 dark:border-slate-700/60 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-slate-300 leading-snug ${
+                            spanFullRow ? 'sm:col-span-2' : ''
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
+                          <span>{detail}</span>
+                        </motion.li>
+                      );
+                    })}
                   </ul>
-                </div>
+                </motion.div>
               </motion.section>
 
               {/* Col 2 (5-col aligned): Thông tin liên hệ | Contact + QR */}
               <motion.section
                 id="contact"
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: isDesktop ? 32 : 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 animate={highlightedSection === 'contact' ? { scale: [1, 1.012, 1] } : { scale: 1 }}
-                viewport={{ once: true, amount: 0.08 }}
-                transition={{ duration: 0.52, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+                viewport={bottomViewport}
+                transition={{
+                  duration: isDesktop ? 0.58 : 0.52,
+                  delay: isDesktop ? 0.12 : 0.08,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
                 className={`group/sec lg:col-span-5 flex flex-col space-y-4 rounded-2xl p-3 -m-3 transition-[background-color,box-shadow] duration-300 ${
                   highlightedSection === 'contact'
                     ? 'ring-2 ring-[#2563EB]/60 dark:ring-sky-400/60 bg-blue-50/85 dark:bg-sky-950/35 shadow-md shadow-blue-900/10 dark:shadow-black/30'
@@ -1502,9 +1702,15 @@ export default function App() {
                   <SectionArrivalBar active={highlightedSection === 'contact'} />
                 </div>
 
-                <div className="flex-1 bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex items-center justify-between gap-4 transition-colors duration-300">
+                <motion.div
+                  initial={{ opacity: 0, y: isDesktop ? 16 : 0, scale: isDesktop ? 0.975 : 1 }}
+                  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                  viewport={bottomViewport}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  className="flex-1 bg-white dark:bg-[#131C31] rounded-2xl border border-zinc-200/90 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex items-center justify-between gap-4 transition-colors duration-300"
+                >
                   <div className="space-y-2.5 text-xs text-zinc-700 dark:text-slate-300 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Phone className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                       <span>
                         {contactSection.phoneLabel}{' '}
@@ -1518,18 +1724,24 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleCopy(profile.phone, 'phone')}
-                        aria-label="Copy phone"
-                        className="text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md p-1 transition-colors"
+                        aria-label={lang === 'vi' ? 'Sao chép số điện thoại' : 'Copy phone number'}
+                        title={lang === 'vi' ? 'Sao chép số điện thoại' : 'Copy phone number'}
+                        className="cursor-pointer inline-flex items-center gap-1 text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md px-1.5 py-1 transition-colors"
                       >
                         {copiedField === 'phone' ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                              {contactSection.copied}
+                            </span>
+                          </>
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Mail className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
                       <span className="truncate">
                         {contactSection.emailLabel}{' '}
@@ -1543,16 +1755,26 @@ export default function App() {
                       <button
                         type="button"
                         onClick={() => handleCopy(profile.email, 'email')}
-                        aria-label="Copy email"
-                        className="text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md p-1 shrink-0 transition-colors"
+                        aria-label={lang === 'vi' ? 'Sao chép địa chỉ email' : 'Copy email address'}
+                        title={lang === 'vi' ? 'Sao chép địa chỉ email' : 'Copy email address'}
+                        className="cursor-pointer inline-flex items-center gap-1 text-zinc-400 dark:text-slate-500 hover:text-[#1D4ED8] dark:hover:text-sky-400 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-md px-1.5 py-1 shrink-0 transition-colors"
                       >
                         {copiedField === 'email' ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                              {contactSection.copied}
+                            </span>
+                          </>
                         ) : (
                           <Copy className="w-3.5 h-3.5" />
                         )}
                       </button>
                     </div>
+
+                    <span className="sr-only" aria-live="polite">
+                      {copiedField ? contactSection.copied : ''}
+                    </span>
 
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-[#1D4ED8] dark:text-sky-400 shrink-0" />
@@ -1588,7 +1810,7 @@ export default function App() {
                     initial={{ opacity: 0, scale: 0.9, y: 14 }}
                     whileInView={{ opacity: 1, scale: 1, y: 0 }}
                     whileHover={{ scale: 1.05, y: -2, transition: { duration: 0.2, delay: 0, ease: [0.16, 1, 0.3, 1] } }}
-                    viewport={{ once: true, amount: 0.15 }}
+                    viewport={bottomViewport}
                     transition={{ duration: 0.44, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
                     className="group flex flex-col items-center gap-1.5 shrink-0 cursor-pointer rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1D4ED8]"
                   >
@@ -1597,7 +1819,7 @@ export default function App() {
                       {contactSection.qrCaption}
                     </span>
                   </motion.a>
-                </div>
+                </motion.div>
               </motion.section>
             </div>
           </div>
@@ -1629,34 +1851,37 @@ export default function App() {
             <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
               <div className="flex items-center gap-2">
                 <a
-                  href="https://linkedin.com"
+                  href={profile.zaloUrl}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="LinkedIn"
+                  aria-label={lang === 'vi' ? 'Nhắn tin Zalo' : 'Message on Zalo'}
+                  title={lang === 'vi' ? 'Nhắn tin Zalo' : 'Message on Zalo'}
                   className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-[#06183A] hover:bg-[#38BDF8] hover:text-white transition-colors"
                 >
-                  <Linkedin className="w-4 h-4" />
-                </a>
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="GitHub"
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-[#06183A] hover:bg-[#38BDF8] hover:text-white transition-colors"
-                >
-                  <Github className="w-4 h-4" />
+                  <MessageCircle className="w-4 h-4" />
                 </a>
                 <button
                   type="button"
+                  onClick={() => setIsPdfOpen(true)}
+                  aria-label={lang === 'vi' ? 'Xem & Tải CV PDF' : 'View & Download PDF Resume'}
+                  title={lang === 'vi' ? 'Xem & Tải CV PDF' : 'View & Download PDF Resume'}
+                  className="cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-[#06183A] hover:bg-[#38BDF8] hover:text-white transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => setIsCvOpen(true)}
-                  aria-label="View CV"
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-[#06183A] hover:bg-[#38BDF8] hover:text-white transition-colors"
+                  aria-label={lang === 'vi' ? 'Xem hồ sơ CV trực tuyến' : 'View online CV'}
+                  title={lang === 'vi' ? 'Xem hồ sơ CV trực tuyến' : 'View online CV'}
+                  className="cursor-pointer inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-[#06183A] hover:bg-[#38BDF8] hover:text-white transition-colors"
                 >
                   <GraduationCap className="w-4 h-4" />
                 </button>
                 <a
                   href={`mailto:${profile.email}`}
-                  aria-label="Email"
+                  aria-label={lang === 'vi' ? 'Gửi Email trực tiếp' : 'Send Email'}
+                  title={profile.email}
                   className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-[#06183A] hover:bg-[#38BDF8] hover:text-white transition-colors"
                 >
                   <Mail className="w-4 h-4" />
@@ -1669,7 +1894,7 @@ export default function App() {
           </div>
         </motion.footer>
 
-        {/* Floating Quick Scroll-to-Top Button */}
+        {/* Floating Quick Scroll-to-Top Button (lifts cleanly above footer when at page bottom) */}
         <AnimatePresence>
           {showScrollTop && (
             <motion.button
@@ -1678,12 +1903,12 @@ export default function App() {
               aria-label={lang === 'vi' ? 'Lên đầu trang' : 'Back to top'}
               title={lang === 'vi' ? 'Lên đầu trang' : 'Back to top'}
               initial={{ opacity: 0, y: 14, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
+              animate={{ opacity: 1, y: nearFooter ? -68 : 0, scale: 1 }}
               exit={{ opacity: 0, y: 14, scale: 0.9 }}
-              whileHover={{ y: -3, scale: 1.06 }}
+              whileHover={{ y: nearFooter ? -71 : -3, scale: 1.06 }}
               whileTap={{ scale: 0.92 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="group fixed bottom-5 right-5 z-30 inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#0B469B] hover:bg-[#1D4ED8] dark:bg-sky-600 dark:hover:bg-sky-500 text-white shadow-lg shadow-blue-950/25 dark:shadow-black/40 border border-white/20 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
+              className="group cursor-pointer fixed bottom-5 right-5 z-30 inline-flex items-center justify-center w-11 h-11 rounded-full bg-[#0B469B] hover:bg-[#1D4ED8] dark:bg-sky-600 dark:hover:bg-sky-500 text-white shadow-lg shadow-blue-950/25 dark:shadow-black/40 border border-white/20 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
             >
               <ArrowUp className="w-5 h-5 transition-transform duration-200 group-hover:-translate-y-0.5" strokeWidth={2.2} />
             </motion.button>
@@ -1693,9 +1918,11 @@ export default function App() {
         {/* Interactive Modals */}
         <ProjectModal
           project={selectedProject}
+          projects={projects}
           lang={lang}
           copy={content.projectModal}
           onClose={() => setSelectedProjectId(null)}
+          onSelectProject={(id) => setSelectedProjectId(id)}
           onContactProject={handleContactProject}
         />
         <SkillModal
@@ -1718,6 +1945,8 @@ export default function App() {
         <ContactModal
           isOpen={isContactOpen}
           initialSubject={contactSubject}
+          recipientEmail={profile.email}
+          zaloUrl={profile.zaloUrl}
           copy={content.contactModal}
           onClose={() => setIsContactOpen(false)}
         />
