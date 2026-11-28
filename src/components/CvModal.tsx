@@ -82,12 +82,12 @@ export function CvModal({ isOpen, content, onClose, onOpenPdf }: CvModalProps) {
             <div id="printable-cv" className="p-6 sm:p-10 space-y-8 text-zinc-900 dark:text-slate-200">
               <header className="pb-6 border-b border-zinc-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 aspect-[7/10] rounded-lg overflow-hidden border border-zinc-200 dark:border-slate-700 bg-zinc-100 dark:bg-slate-800 shrink-0">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border border-zinc-200 dark:border-slate-700 bg-zinc-100 dark:bg-slate-800 shrink-0">
                     <img
                       src={profile.portraitImage}
                       alt={profile.fullName}
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-full object-cover object-[50%_26%] scale-[1.03]"
                     />
                   </div>
                   <div>

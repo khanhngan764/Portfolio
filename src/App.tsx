@@ -1098,15 +1098,19 @@ export default function App() {
 
                 {/* Right Hero Portrait + Technology Quote */}
                 <div className="lg:col-span-5 flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-6">
-                  <div className="group relative w-[215px] sm:w-[235px] rounded-2xl overflow-hidden border border-white/25 hover:border-[#38BDF8]/75 bg-white/12 p-1.5 shadow-2xl hover:shadow-[0_14px_34px_rgba(34,211,238,0.25)] shrink-0 transition-[border-color,box-shadow] duration-500">
-                    <div className="relative overflow-hidden rounded-xl">
+                  <div className="group relative w-[216px] h-[216px] sm:w-[244px] sm:h-[244px] rounded-full overflow-hidden border-2 border-[#7DD3FC]/55 hover:border-[#38BDF8] bg-gradient-to-b from-white/20 via-[#38BDF8]/15 to-white/10 p-1.5 shadow-[0_14px_38px_rgba(4,18,48,0.55)] hover:shadow-[0_14px_34px_rgba(34,211,238,0.28)] shrink-0 transition-[border-color,box-shadow] duration-500">
+                    <div className="relative w-full h-full overflow-hidden rounded-full ring-1 ring-inset ring-white/30">
                       <ResilientImage
                         src={profile.portraitImage}
                         alt={`${profile.fullName} — IT Supervisor`}
                         fallbackTitle={profile.fullName}
-                        imgClassName="object-top"
-                        className="w-full aspect-[7/10] rounded-xl"
+                        imgClassName="object-[50%_26%] scale-[1.03]"
+                        className="w-full h-full rounded-full"
                         priority
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-0 rounded-full shadow-[inset_0_0_20px_rgba(4,18,48,0.18)]"
                       />
                       <span
                         aria-hidden="true"
