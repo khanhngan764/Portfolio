@@ -796,6 +796,7 @@ export const CONTENT: Record<Language, LocalizedContent> = {
       targetRole: 'Target Position: Head of IT Department (IT Supervisor)',
       location: 'Trang Dai Ward, Dong Nai City, Vietnam',
       ...COMMON,
+      cvPdfUrl: '/cv/CV_Hoang_Van_Thien_IT_Supervisor_EN.pdf',
       heroLead:
         'Master of Information Technology with 16 years of experience in IT infrastructure management, Windows Server administration, enterprise databases (Oracle 19c/21c, Data Guard, SQL Server), ArcGIS Enterprise, and C# .NET software development.',
       education: [

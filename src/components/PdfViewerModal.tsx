@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { X, Download, FileText, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Language } from '../data/profile';
@@ -20,25 +20,37 @@ export function PdfViewerModal({
   onClose,
 }: PdfViewerModalProps) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
-  const [pdfLang, setPdfLang] = useState<Language>(lang);
+  const [manualPdfLang, setManualPdfLang] = useState<Language | null>(null);
+  const [prevLang, setPrevLang] = useState<Language>(lang);
+  const [prevOpen, setPrevOpen] = useState<boolean>(isOpen);
 
-  useEffect(() => {
-    if (isOpen) {
-      setPdfLang(lang);
+  if (prevLang !== lang) {
+    setPrevLang(lang);
+    setManualPdfLang(null);
+  }
+  if (prevOpen !== isOpen) {
+    setPrevOpen(isOpen);
+    if (!isOpen) {
+      setManualPdfLang(null);
     }
-  }, [isOpen, lang]);
+  }
 
   useModalDialog(isOpen, onClose, dialogRef);
 
+  const pdfLang: Language = manualPdfLang ?? lang;
   const isVi = lang === 'vi';
-  const activeUrl = pdfLang === 'en' && enPdfUrl ? enPdfUrl : pdfUrl;
+  const viPdfUrl = '/cv/CV_Hoang_Van_Thien_IT_Supervisor.pdf';
+  const resolvedEnPdfUrl = enPdfUrl ?? '/cv/CV_Hoang_Van_Thien_IT_Supervisor_EN.pdf';
+  const activeUrl =
+    pdfLang === 'en' ? resolvedEnPdfUrl : lang === 'vi' ? pdfUrl : viPdfUrl;
   const activeFileName =
-    pdfLang === 'en' && enPdfUrl
+    pdfLang === 'en'
       ? 'CV_Hoang_Van_Thien_IT_Supervisor_EN.pdf'
       : 'CV_Hoang_Van_Thien_IT_Supervisor.pdf';
-  const docLabel = isVi
-    ? 'CV Hoàng Văn Thiện PDF'
-    : 'Hoang Van Thien — IT Supervisor Resume PDF';
+  const docLabel =
+    pdfLang === 'en'
+      ? 'Hoang Van Thien — IT Supervisor Resume PDF'
+      : 'CV Hoàng Văn Thiện PDF';
 
   return (
     <AnimatePresence>
@@ -84,36 +96,34 @@ export function PdfViewerModal({
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                {enPdfUrl && (
-                  <div
-                    role="group"
-                    aria-label={isVi ? 'Chọn ngôn ngữ file PDF' : 'Select PDF language'}
-                    className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-slate-800 border border-zinc-200/80 dark:border-slate-700"
+                <div
+                  role="group"
+                  aria-label={isVi ? 'Chọn ngôn ngữ file PDF' : 'Select PDF language'}
+                  className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-slate-800 border border-zinc-200/80 dark:border-slate-700"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setManualPdfLang('vi')}
+                    className={`cursor-pointer px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                      pdfLang === 'vi'
+                        ? 'bg-[#0B469B] dark:bg-sky-600 text-white shadow-xs'
+                        : 'text-zinc-600 dark:text-slate-300 hover:text-zinc-950 dark:hover:text-white'
+                    }`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setPdfLang('vi')}
-                      className={`cursor-pointer px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
-                        pdfLang === 'vi'
-                          ? 'bg-[#0B469B] dark:bg-sky-600 text-white shadow-xs'
-                          : 'text-zinc-600 dark:text-slate-300 hover:text-zinc-950 dark:hover:text-white'
-                      }`}
-                    >
-                      VI
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPdfLang('en')}
-                      className={`cursor-pointer px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
-                        pdfLang === 'en'
-                          ? 'bg-[#0B469B] dark:bg-sky-600 text-white shadow-xs'
-                          : 'text-zinc-600 dark:text-slate-300 hover:text-zinc-950 dark:hover:text-white'
-                      }`}
-                    >
-                      EN
-                    </button>
-                  </div>
-                )}
+                    VI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManualPdfLang('en')}
+                    className={`cursor-pointer px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                      pdfLang === 'en'
+                        ? 'bg-[#0B469B] dark:bg-sky-600 text-white shadow-xs'
+                        : 'text-zinc-600 dark:text-slate-300 hover:text-zinc-950 dark:hover:text-white'
+                    }`}
+                  >
+                    EN
+                  </button>
+                </div>
 
                 <a
                   href={activeUrl}
@@ -166,6 +176,7 @@ export function PdfViewerModal({
                 aria-label={docLabel}
               >
                 <iframe
+                  key={activeUrl}
                   src={`${activeUrl}#view=FitH`}
                   title={docLabel}
                   className="w-full h-full border-0"
