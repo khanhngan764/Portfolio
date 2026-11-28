@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X, Download, FileText, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Language } from '../data/profile';
@@ -7,6 +7,7 @@ import { useModalDialog } from '../hooks/useModalDialog';
 interface PdfViewerModalProps {
   isOpen: boolean;
   pdfUrl: string;
+  enPdfUrl?: string;
   lang: Language;
   onClose: () => void;
 }
@@ -14,13 +15,30 @@ interface PdfViewerModalProps {
 export function PdfViewerModal({
   isOpen,
   pdfUrl,
+  enPdfUrl,
   lang,
   onClose,
 }: PdfViewerModalProps) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const [pdfLang, setPdfLang] = useState<Language>(lang);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPdfLang(lang);
+    }
+  }, [isOpen, lang]);
+
   useModalDialog(isOpen, onClose, dialogRef);
 
   const isVi = lang === 'vi';
+  const activeUrl = pdfLang === 'en' && enPdfUrl ? enPdfUrl : pdfUrl;
+  const activeFileName =
+    pdfLang === 'en' && enPdfUrl
+      ? 'CV_Hoang_Van_Thien_IT_Supervisor_EN.pdf'
+      : 'CV_Hoang_Van_Thien_IT_Supervisor.pdf';
+  const docLabel = isVi
+    ? 'CV Hoàng Văn Thiện PDF'
+    : 'Hoang Van Thien — IT Supervisor Resume PDF';
 
   return (
     <AnimatePresence>
@@ -56,18 +74,49 @@ export function PdfViewerModal({
                     className="text-sm font-semibold text-zinc-950 dark:text-white truncate"
                   >
                     {isVi
-                      ? 'CV Hoàng Văn Thiện — IT Supervisor (Bản PDF gốc)'
-                      : 'Hoang Van Thien — IT Supervisor Resume (Original PDF)'}
+                      ? 'CV Hoàng Văn Thiện — IT Supervisor (Bản PDF)'
+                      : 'Hoang Van Thien — IT Supervisor Resume (PDF)'}
                   </h2>
                   <p className="text-[11px] font-mono text-zinc-500 dark:text-slate-400 truncate">
-                    CV_Hoang_Van_Thien_IT_Supervisor.pdf
+                    {activeFileName}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {enPdfUrl && (
+                  <div
+                    role="group"
+                    aria-label={isVi ? 'Chọn ngôn ngữ file PDF' : 'Select PDF language'}
+                    className="inline-flex items-center p-0.5 rounded-lg bg-zinc-100 dark:bg-slate-800 border border-zinc-200/80 dark:border-slate-700"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setPdfLang('vi')}
+                      className={`cursor-pointer px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                        pdfLang === 'vi'
+                          ? 'bg-[#0B469B] dark:bg-sky-600 text-white shadow-xs'
+                          : 'text-zinc-600 dark:text-slate-300 hover:text-zinc-950 dark:hover:text-white'
+                      }`}
+                    >
+                      VI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPdfLang('en')}
+                      className={`cursor-pointer px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+                        pdfLang === 'en'
+                          ? 'bg-[#0B469B] dark:bg-sky-600 text-white shadow-xs'
+                          : 'text-zinc-600 dark:text-slate-300 hover:text-zinc-950 dark:hover:text-white'
+                      }`}
+                    >
+                      EN
+                    </button>
+                  </div>
+                )}
+
                 <a
-                  href={pdfUrl}
+                  href={activeUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-zinc-800 dark:text-slate-200 bg-zinc-100 dark:bg-slate-800 hover:bg-zinc-200 dark:hover:bg-slate-700 rounded-lg transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
@@ -76,8 +125,8 @@ export function PdfViewerModal({
                   <span className="hidden sm:inline">{isVi ? 'Mở tab mới' : 'Open tab'}</span>
                 </a>
                 <a
-                  href={pdfUrl}
-                  download="CV_Hoang_Van_Thien_IT_Supervisor.pdf"
+                  href={activeUrl}
+                  download={activeFileName}
                   className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-white bg-[#0B469B] hover:bg-[#1D4ED8] rounded-lg transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1D4ED8]"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -98,7 +147,7 @@ export function PdfViewerModal({
             <div className="sm:hidden flex items-center justify-between gap-2 px-4 py-2 bg-blue-50/90 dark:bg-slate-800/80 border-b border-blue-100 dark:border-slate-700 text-[11px] text-zinc-700 dark:text-slate-300 shrink-0">
               <span>{isVi ? 'Nếu khung PDF không cuộn được trên điện thoại:' : 'On mobile, open full PDF:'}</span>
               <a
-                href={pdfUrl}
+                href={activeUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="font-semibold text-[#0B469B] dark:text-sky-400 underline whitespace-nowrap"
@@ -110,14 +159,15 @@ export function PdfViewerModal({
             {/* Embedded In-Page PDF Viewer */}
             <div className="flex-1 bg-zinc-100 dark:bg-slate-900 relative overflow-hidden">
               <object
-                data={`${pdfUrl}#view=FitH`}
+                key={activeUrl}
+                data={`${activeUrl}#view=FitH`}
                 type="application/pdf"
                 className="w-full h-full"
-                aria-label="CV Hoàng Văn Thiện PDF"
+                aria-label={docLabel}
               >
                 <iframe
-                  src={`${pdfUrl}#view=FitH`}
-                  title="CV Hoàng Văn Thiện PDF"
+                  src={`${activeUrl}#view=FitH`}
+                  title={docLabel}
                   className="w-full h-full border-0"
                 />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-zinc-50 dark:bg-slate-900 space-y-4">
@@ -128,7 +178,7 @@ export function PdfViewerModal({
                   </p>
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <a
-                      href={pdfUrl}
+                      href={activeUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-zinc-800 dark:text-slate-100 bg-white dark:bg-slate-800 border border-zinc-200 dark:border-slate-700 rounded-lg transition-colors"
@@ -137,8 +187,8 @@ export function PdfViewerModal({
                       <span>{isVi ? 'Mở toàn màn hình' : 'Open in New Tab'}</span>
                     </a>
                     <a
-                      href={pdfUrl}
-                      download="CV_Hoang_Van_Thien_IT_Supervisor.pdf"
+                      href={activeUrl}
+                      download={activeFileName}
                       className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-white bg-[#0B469B] hover:bg-[#1D4ED8] rounded-lg transition-colors"
                     >
                       <Download className="w-4 h-4" />

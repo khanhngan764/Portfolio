@@ -1158,7 +1158,7 @@ export default function App() {
 
           {/* FLOATING 6-COLUMN HIGHLIGHT STRIP */}
           <motion.section
-            aria-label="Điểm nhấn chuyên môn"
+            aria-label={lang === 'vi' ? 'Điểm nhấn chuyên môn' : 'Key Professional Highlights'}
             style={{ y: highlightStripY }}
             className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-10 -mt-10 relative z-20 will-change-transform transform-gpu"
           >
@@ -1943,6 +1943,7 @@ export default function App() {
         <PdfViewerModal
           isOpen={isPdfOpen}
           pdfUrl={profile.cvPdfUrl}
+          enPdfUrl="/cv/CV_Hoang_Van_Thien_IT_Supervisor_EN.pdf"
           lang={lang}
           onClose={() => setIsPdfOpen(false)}
         />
